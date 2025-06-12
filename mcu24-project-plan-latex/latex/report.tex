@@ -1,0 +1,247 @@
+% Document class `report-template` accepts either project-plan or final-report option in
+% []. This will change the title page as necessary.
+\documentclass[project-plan]{report-template}
+% \documentclass[final-report]{report-template}
+
+% Packages I use in my report.
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{blindtext}
+\usepackage{natbib}
+
+% Directory where I saved my figures.
+\graphicspath{{./figures/}}
+
+% Metadata used for the title page - please modify.
+\university{Imperial College London}
+\department{Department of Earth Science and Engineering}
+\course{MSc in Geo-Energy with Machine Learning and Data Science}
+\title{Next-Gen Sedimentology: Automating Grain-Size Measurements with Machine Learning}
+\author{Miracle Chukwuebuka Ukaka}
+\email{miracle.ukaka24@imperial.ac.uk}
+\githubusername{esemsc-mcu24}
+\supervisors{Dr. Rebecca Bell\\
+             Nahin Rezwan}
+\repository{https://github.com/ese-ada-lovelace-2024/irp-mcu24}
+
+\begin{document}
+
+\maketitlepage  % generate title page
+
+\tableofcontents
+\newpage
+
+% Abstract
+\section{Abstract}
+Measuring grain sizes in sediment samples is crucial for understanding how rivers transported materials in the past and how landscapes evolved over time. However, traditional methods involve tedious manual measurements that are slow, labor-intensive, and limited in scope. Recent advances in deep learning have demonstrated that automated grain segmentation can achieve high accuracy, especially with the Cellpose-based framework, showing particular promise for sedimentological applications. This project focuses on bridging the gap between laboratory-proven technology and practical field deployment by integrating the validated model into a comprehensive Android mobile application. The project will adapt and optimize the existing Cellpose framework for mobile deployment, converting the trained model to TensorFlow Lite format for efficient on-device processing. The resulting Android application will enable geologists to perform accurate grain size analysis directly in both laboratory and field environments using smartphone cameras, eliminating the need for specialized equipment or internet connectivity. The project will validate the mobile application against established measurement methods across diverse sedimentary environments, ensuring that the convenience of mobile deployment does not compromise analytical precision. The expected deliverables include a fully functional, field-tested Android application that democratizes access to automated grain size analysis technology. This tool will enable large-scale sedimentological studies that were previously impractical due to manual measurement constraints, with potential applications spanning academic research, environmental consulting, and field exploration. By making advanced analytical capabilities accessible through ubiquitous smartphone technology, this work represents a significant step toward modernizing sedimentological fieldwork practices and improving research in Earth surface processes.
+\newline
+
+%\blindtext  % outputs some dummy text
+
+
+% Introduction section
+\section{Introduction}
+\subsection{Background and Problem Description}
+Grain-size distributions of clastic sediments are fundamental to unraveling the dynamics of sediment transport, depositional processes, and their links to tectonic and climatic forcings. In gravel‐dominated fluvial systems, particle size not only controls bedload mobility and channel morphology but also preserves information about past hydrodynamic conditions and source-area characteristics \citep{Church2006}. Traditionally, grain‐size data have been obtained through sieving of bulk samples or by manually measuring individual clasts with calipers in the field \citep{Bunte2001}. Although these approaches yield accurate measurements, they are inherently labor‐intensive, time‐consuming, and spatially limited, particularly when sampling large outcrop faces or extensive modern gravel bars.
+
+To overcome these constraints, photo‐based methods—ranging from manual line‐count grids to semi‐automated image analysis—have been increasingly adopted \citep{Graham2010, Purinton2019}. By capturing orthorectified photographs or drone‐derived orthoimages, it is possible to measure grain dimenPhoto-based methods, while offering improvements over manual measurements, still introduce sources of uncertainty including occlusion by matrix or overlapping clasts, perspective distortion, and the two-dimensional projection of three-dimensional grains \citep{Garefalakis2023}. Semi-automated approaches require significant manual intervention and specialized software, limiting their practical application in field settings.
+
+Recent advances in computer vision and deep learning have opened the door to fully automated grain segmentation and sizing. Convolutional neural networks (CNNs), particularly U‐Net‐style architectures and transfer‐learning frameworks like Cellpose, can be retrained to recognize individual sediment particles in close‐range and high‐resolution drone imagery (Mair et al., 2023). By fitting ellipses or convex hulls to each segmented grain, it becomes possible to compute percentile metrics (e.g., D16, D50, D84) across entire exposures with minimal human input. \cite{Mair2023} show that a Cellpose model, originally developed for biomedical cell segmentation, can be fine‐tuned on as little as 10\%–20\% of the annotated data required by previous methods—yet still outperform existing algorithms in both precision and recall.
+
+However, a critical gap exists between these laboratory-scale computational advances and practical field deployment. The integration of machine learning models into mobile applications presents unique challenges and opportunities that have been increasingly recognized across various domains. As noted by \cite{Ajani2021} and \cite{Lane2017}, the deployment of machine learning within embedded and mobile devices requires careful optimization to address constraints related to computational resources, power consumption, and real-time processing requirements. The field of mobile data science has evolved rapidly, with \cite{Iqbal2020, Iqbal2021} highlighting the importance of context-aware machine learning applications that can adapt to varying environmental conditions and user requirements.
+
+TensorFlow Lite (TFLite) has emerged as a leading framework for mobile machine learning deployment, running on more than 4 billion devices globally. This framework enables offline AI model deployment, reducing latency, preserving privacy, and decreasing reliance on network connectivity, making it particularly suitable for real-time applications like image recognition \citep{Channonthawat2016}. The advantages of on-device processing are particularly relevant for geological fieldwork, where internet connectivity may be limited or absent, and where immediate analysis results can inform sampling strategies and field decisions \citep{Veeramani2022, Dai2020}.
+
+The challenge of integrating sophisticated computer vision models into mobile applications extends beyond technical optimization \cite{Arpteg2018}. \cite{Roger2021} emphasizes that successful integration of convolutional neural networks in mobile applications requires consideration of user interface design, model performance under varying conditions, and robust error handling. Similarly, \cite{Lyan2023} discuss the importance of comprehensive frameworks like AppCraft for streamlining the machine learning model integration process into mobile applications.
+
+Furthermore, the democratization of advanced analytical capabilities through mobile technology represents a paradigm shift in how geological fieldwork can be conducted. Traditional approaches to grain-size analysis often require specialized equipment, laboratory facilities, and extensive post-processing workflows. A mobile application integrating validated machine learning models could eliminate these barriers, enabling immediate analysis and decision-making in field environments while maintaining the accuracy and precision demonstrated in laboratory settings.
+
+\subsection{Aim}
+To develop, validate, and deploy a comprehensive Android mobile application that integrates the validated Cellpose-based grain segmentation model from Mair et al. (2023) for accurate, efficient, and accessible grain size analysis in both laboratory and field environments, thereby bridging the gap between proven machine learning technology and practical geological applications.
+
+% \subsection{Objectives}
+% 1. Assemble and preprocess a diverse image dataset.
+
+% 2. Develop and train robust deep learning models to accurately segment individual sedimentary grains.
+
+% 3. Calibrate automated measurements against traditional field methods.
+
+% 4. Apply the automated workflow to analyze grain size variations across different temporal and spatial scales. 
+
+% 5. Design and develop an Android application.
+
+% 6. Field-test, document, and refine the integrated system.
+
+% Ultimately, this integrated approach promises to accelerate sediment‐routing studies, improve reproducibility, and deliver a toolset that benefits both academic researchers and industry practitioners in geomorphology, petroleum reservoir characterization, and environmental monitoring.
+
+% Another section
+\section{Methodology}
+\subsection{Model Integration and Mobile Optimization}
+The project will leverage the validated Cellpose-based grain segmentation model developed by Mair et al. (2023), which has demonstrated superior performance in automated sediment grain analysis. The existing PyTorch-based Cellpose model will be converted to mobile-compatible formats through a multi-stage optimization pipeline. Initially, the trained model weights will be exported to Open Neural Network Exchange (ONNX) format to ensure cross-platform compatibility. Subsequently, the ONNX model will be converted to TensorFlow Lite (TFLite) format using TensorFlow's conversion tools, incorporating post-training quantization techniques to reduce model size and improve inference speed.\\\\
+Quantization strategies will be implemented to balance model performance with mobile hardware constraints. Integer quantization (8-bit weights and activations) will be applied to achieve target model sizes of less than 10 MB while maintaining measurement precision within acceptable tolerances. Dynamic range quantization and full integer quantization approaches will be evaluated to determine optimal performance trade-offs for different mobile device specifications.
+Model optimization will include pruning techniques to remove redundant parameters and knowledge distillation methods if necessary to create more efficient architectures suitable for real-time mobile inference. Benchmark testing will be conducted across representative Android devices with varying computational capabilities to ensure consistent performance across the target user base.
+
+% % Equation
+% \begin{equation}
+%     \label{eq:vertical-position}
+%     y(t) = v_{0}t - \frac{1}{2}gt^{2},
+% \end{equation}
+
+% where $v_{0}$ is the initial velocity, and $g$ is the acceleration due to the Earth's gravity.
+
+% Figure
+% \begin{figure}
+%     \begin{center}
+%         \includegraphics[width=0.2\textwidth]{experiment.jpg}
+%     \end{center}
+%     \caption{\label{fig:experiment} Particle in vertical motion.}
+% \end{figure}
+
+% Python code we implemented for computing $y(t)$ is:
+
+% % Code listing
+% \begin{lstlisting}[language=Python]
+% def position(t, v0=0, g=9.81):
+%     """Position of a particle in verticle motion."""
+%     return v0*t - 0.5*g*t**2
+% \end{lstlisting}
+
+% We made our computational workflows reproducible using Jupyter~\cite{Beg2021}.
+\subsection{Android Application Architecture and Development}
+The Android application will be developed using Android Studio (version 2023.x or latest stable release) with Kotlin as the primary programming language, following Google's recommended Material Design guidelines for intuitive user experience. The application architecture will implement the Model-View-ViewModel (MVVM) pattern to ensure maintainable, testable, and scalable code structure. Core application components will include:
+\begin{itemize}
+    \item \textbf{Camera Integration Module}: Implementation of Android's CameraX API to provide consistent camera functionality across diverse Android devices. This module will handle image capture, preview management, and automatic focus/exposure optimization for sediment photography. Camera2 API will be utilized for advanced features requiring fine-grained camera control.
+\end{itemize}
+\begin{itemize}
+    \item \textbf{Machine Learning Inference Engine}: Integration of TensorFlow Lite Interpreter API for on-device model execution. This component will manage model loading, input preprocessing, inference execution, and output post-processing.
+\end{itemize}
+\begin{itemize}
+    \item \textbf{Image Processing Pipeline}: Development of preprocessing algorithms to standardize input images for optimal model performance. This includes automatic scale detection from reference objects, image orientation correction, contrast enhancement, and noise reduction tailored to geological imaging conditions.
+\end{itemize}
+\begin{itemize}
+    \item \textbf{User Interface Components}: Creation of intuitive interfaces for camera operation, real-time analysis visualization, results interpretation, and data management. The UI will incorporate accessibility features and support for various screen sizes and orientations.
+\end{itemize}
+
+\subsection{Real-Time Processing and Data Management}
+The application will prioritize real-time or near-real-time processing capabilities to enable immediate feedback during field data collection. Comprehensive data management capabilities will also be implemented to support both individual measurements and large-scale studies. Processing and data management strategies include:
+\begin{itemize}
+    \item \textbf{Background Processing}: Utilization of Android's background processing capabilities to enable analysis of multiple images while maintaining responsive user interactions. AsyncTask and WorkManager frameworks will manage long-running operations without blocking the user interface.
+\end{itemize}
+\begin{itemize}
+    \item \textbf{Progress Visualization}: Development of intuitive progress indicators and intermediate result visualization to keep users informed during processing operations. Real-time overlay of detected grains and preliminary measurements will provide immediate feedback on analysis quality.
+\end{itemize}
+\begin{itemize}
+    \item \textbf{Local Data Storage}: Implementation of SQLite database for local storage of measurement results, metadata, and analysis parameters. Room persistence library will provide robust database management with automatic backup and recovery capabilities.
+\end{itemize}
+\begin{itemize}
+    \item \textbf{Export Formats}: Support for multiple data export formats including CSV, JSON, and KML for compatibility with existing geological software and GIS systems. Standardized data schemas will ensure consistency with established sedimentological databases.
+\end{itemize}
+\begin{itemize}
+    \item \textbf{Cloud Integration}: Optional cloud synchronization capabilities using Firebase or similar services for data backup, sharing, and collaborative analysis. Privacy-preserving approaches will ensure user data security while enabling research collaboration.
+\end{itemize}
+
+\subsection{Validation and Performance Assessment}
+Rigorous validation protocols will be implemented to quantify application performance and measurement accuracy:
+\begin{itemize}
+    \item \textbf{Laboratory Validation}: Controlled testing using reference sediment samples with known grain-size distributions measured through traditional sieving and caliper methods. Statistical analysis will quantify measurement precision, accuracy, and repeatability across different grain-size ranges.
+\end{itemize}
+\begin{itemize}
+    \item \textbf{Field Validation}: Deployment in diverse geological environments to assess performance under varying lighting conditions, surface textures, and grain compositions. Comparative analysis with established field measurement techniques will validate practical utility.
+\end{itemize}
+\begin{itemize}
+    \item \textbf{Cross-Device Testing}: Comprehensive testing across different Android devices, camera specifications, and operating system versions to ensure consistent performance and identify device-specific optimization requirements.
+\end{itemize}
+
+\subsection{ Documentation and Deployment}
+Comprehensive documentation and deployment strategies will ensure widespread adoption and proper utilization:
+\begin{itemize}
+    \item \textbf{Technical Documentation}: Development of detailed technical documentation including API references, architecture descriptions, and maintenance procedures. Open-source release through GitHub will include installation guides, usage examples, and contribution guidelines.
+\end{itemize}
+\begin{itemize}
+    \item \textbf{User Manuals}: Creation of user-friendly manuals with step-by-step instructions, best practices for image capture, troubleshooting guides, and interpretation of results.
+\end{itemize}
+
+\section{Expected Outcomes/Deliverables}
+\textbf{Optimized TFLite Model}: A fully converted and quantized TensorFlow Lite version of the Cellpose‐based sediment‐grain segmentation network, together with benchmark reports comparing size (~MB), latency (ms/frame), and segmentation accuracy (IoU, F1) against the original model.
+
+\textbf{Android Application Package}: A signed APK of the Android app featuring:
+
+\begin{itemize}
+    \item Live CameraX acquisition with adjustable lighting and scale‐marker detection
+\end{itemize}
+
+\begin{itemize}
+    \item On‐device segmentation \& grain‐size computation (D16, D50, D84)
+\end{itemize}
+
+\begin{itemize}
+    \item Timestamping and offline result caching
+\end{itemize}
+
+\begin{itemize}
+    \item Cloud sync integration via Firebase with user authentication
+\end{itemize}
+
+\textbf{Performance \& Usability Reports}: This would include etailed validation results from:
+\begin{itemize}
+    \item Laboratory trials, error metrics (MAE, RMSE) for D16/D50/D84
+\end{itemize}
+
+\begin{itemize}
+    \item Field deployments at distinct river sites, segmentation robustness statistics and environmental metadata analyses
+\end{itemize}
+
+\begin{itemize}
+    \item User‐experience feedback from conducted tests.
+\end{itemize}
+
+\textbf{Documentation \& Code Release}: This would include the following:
+
+\begin{itemize}
+    \item User Guide: Illustrated walkthrough of installation, calibration, and both analysis modes.
+\end{itemize}
+
+\begin{itemize}
+    \item Developer Documentation: Architecture overview, conversion scripts, API specifications, and data schema.
+\end{itemize}
+
+\begin{itemize}
+    \item Open‐Source Repository: GitHub project containing source code, model files, sample datasets, user/developer docs, and example reports, released under an appropriate open‐source license.
+\end{itemize}
+
+\section{Project Plan}
+\textbf{May} \\
+- Week 1: Literature Review \\\\
+\textbf{June} \\
+- Week 2: Research Gap Identification and Proposal Writing \\
+- Week 3: Proposal Writing \\
+- \textit{\textbf{Submit Project Plan by 12:00pm BST on Friday, June 13th, 2025}} \\
+- Week 4: Model Integration and Optimization \\
+- Week 5: Core Android Application Development \\\\
+\textbf{July} \\
+- Week 6: Advanced Feature Development \\
+- Week 7: Application Integration and Testing \\
+- Week 8: User Experience Optimization \\
+- Week 9: Advanced Features and Cloud Integration \\
+- \textbf{\textit{Complete mobile application development by Friday, July 26th, 2025}} \\
+- Week 10: Validation, Field Testing, and Optimization \\\\
+\textbf{August} \\
+- Week 11: Analysis and report writing \\
+- Week 12: Report writing \\
+- \textbf{\textit{Complete first draft of Final Report by Friday, August 15th, 2025}} \\
+- Week 13: Report writing \\
+- Week 14: Report cleaning and presentation planning \\
+- \textbf{\textit{Submit Final Report by 12:00pm BST on Friday, August 29th, 2025}} \\
+\begin{figure}[hbt!]
+    \centering
+    \includegraphics[width=1\linewidth]{gantt_chart.png}
+    \caption{Project Plan Gantt Chart Showing Schedule}
+    \label{fig:1}
+\end{figure}
+
+% References
+\newpage
+\bibliographystyle{agsm}
+\bibliography{references}  % BibTeX references are saved in references.bib
+
+\end{document}          
