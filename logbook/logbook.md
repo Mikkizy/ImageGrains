@@ -44,3 +44,41 @@ Meeting (9 June 2025)
 
         Start reviewing existing literatures.
 
+Meeting (23 June 2025)
+
+    Present: Miracle Ukaka (MU, student), Rebecca Bell (RB, main supervisor), Nahin Rezwan (NR, second supervisor)
+
+    Key points discussed:
+
+        Steps needed for converting models
+
+        The need for the right scaling strategy
+
+    Feedback received:
+
+        The team felt the project plan was resourceful and encouraged more research into the right conversion implementations.
+
+    Work plan before next meeting:
+
+        Convert models into tensorflow lite and check accuracy trade-offs.
+
+Meeting (3 July 2025)
+
+    Present: Miracle Ukaka (MU, student), Rebecca Bell (RB, main supervisor), Nahin Rezwan (NR, second supervisor)
+
+    Key points discussed:
+
+        Model Conversion Results
+
+        Accuracy Trade-offs
+
+        Image Scaling and Downsizing
+
+    Feedback received:
+
+        The team was okay with the converted model results and suggested that I track the changes.
+
+    Work plan before next meeting:
+
+        Implement base mobile app with integrated models.
+
