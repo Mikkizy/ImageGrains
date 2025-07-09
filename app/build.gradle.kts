@@ -71,6 +71,26 @@ dependencies {
     implementation(libs.coil.compose)
     implementation(libs.accompanist.permissions)
 
+    implementation(libs.tensorflow.lite)
+    implementation(libs.tensorflow.lite.gpu)
+    implementation(libs.tensorflow.lite.support)
+
+    implementation(libs.tensorflow.lite.gpu.api)
+
+    // For scientific computing operations
+    implementation(libs.commons.math3)
+
+    implementation(libs.opencv)
+
+    // ONNX Runtime for Android
+    implementation(libs.onnxruntime.android)
+    // For geometric operations (Shapely equivalent)
+    implementation(libs.jts.core)
+    // For spatial indexing (rtree equivalent)
+    implementation(libs.spatial4j)
+    implementation(libs.lucene.spatial.extras)
+
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)

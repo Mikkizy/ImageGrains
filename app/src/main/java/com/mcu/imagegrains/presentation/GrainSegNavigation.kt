@@ -8,11 +8,19 @@ import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import com.mcu.imagegrains.presentation.camera.CameraScreen
 import com.mcu.imagegrains.presentation.home.HomeScreen
+import com.mcu.imagegrains.presentation.instance_seg.InstanceSegmentationScreen
 import com.mcu.imagegrains.presentation.photo_display.PhotoDisplayScreen
+import com.mcu.imagegrains.presentation.result_overview.ResultsOverviewScreen
+import com.mcu.imagegrains.presentation.scale_calibration.ScaleCalibrationScreen
+import com.mcu.imagegrains.presentation.semantic_seg.SemanticSegmentationResultScreen
 import com.mcu.imagegrains.presentation.splash.SplashScreen
 
 @Composable
-fun GrainSegmentationNavigation(navController: NavHostController, activity: Activity) {
+fun GrainSegmentationNavigation(
+    navController: NavHostController,
+    activity: Activity,
+    sharedSegmentationViewModel: SharedSegmentationViewModel
+) {
     NavHost(
         navController = navController,
         startDestination = SplashScreen
@@ -46,7 +54,59 @@ fun GrainSegmentationNavigation(navController: NavHostController, activity: Acti
             val photoUri = backStackEntry.toRoute<PhotoDisplayScreen>().photoUri
             PhotoDisplayScreen(
                 onBackClicked = { navController.popBackStack()},
-                photoUriString = photoUri
+                photoUriString = photoUri,
+                sharedViewModel = sharedSegmentationViewModel,
+                navigateToSegmentation = {
+                    // Navigate to segmentation screen
+                    navController.navigate(SemanticSegmentationScreen)
+                }
+            )
+        }
+
+        composable<SemanticSegmentationScreen>{
+            SemanticSegmentationResultScreen(
+                goBack = { navController.popBackStack() },
+                navigateToScaleCalibration = {
+                    // Navigate to scale calibration screen
+                    navController.navigate(ScaleCalibrationScreen)
+                },
+                sharedViewModel = sharedSegmentationViewModel
+            )
+        }
+
+        composable<ScaleCalibrationScreen>{
+            ScaleCalibrationScreen(
+                goBack = { navController.popBackStack() },
+                navigateToInstanceSegmentation = {
+                    // Navigate to instance segmentation screen
+                    navController.navigate(InstanceSegmentationScreen)
+                },
+                sharedViewModel = sharedSegmentationViewModel
+            )
+        }
+
+        composable<InstanceSegmentationScreen>{
+            InstanceSegmentationScreen(
+                goBack = { navController.popBackStack() },
+                navigateToScaleCalibration = {
+                    // Navigate to scale calibration screen
+                    navController.navigate(ScaleCalibrationScreen)
+                },
+                navigateToResultOverview = {
+                    // Navigate to result overview screen
+                    navController.navigate(ResultOverviewScreen)
+                },
+                sharedViewModel = sharedSegmentationViewModel
+            )
+        }
+
+        composable<ResultOverviewScreen>{
+            ResultsOverviewScreen(
+                goBack = { navController.popBackStack() },
+                goToHome = { navController.navigate(HomeScreen) {
+                    popUpTo(HomeScreen) { inclusive = true }
+                } },
+                sharedViewModel = sharedSegmentationViewModel
             )
         }
     }
