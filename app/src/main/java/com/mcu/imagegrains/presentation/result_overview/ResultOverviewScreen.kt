@@ -1,5 +1,6 @@
 package com.mcu.imagegrains.presentation.result_overview
 
+import android.widget.Toast
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -202,7 +203,10 @@ fun ResultsOverviewScreen(
             onConfirm = { fileName ->
                 scope.launch {
                     scaledGrainData?.let { data ->
-                        CSVExportUtils.exportGrainDataToCSV(context, data, fileName)
+                        val fileUri = CSVExportUtils.exportGrainDataToCSV(context, data, fileName)
+                        if (fileUri != null) {
+                            Toast.makeText(context, "File saved as $fileName", Toast.LENGTH_SHORT).show()
+                        }
                     }
                     showExportDialog = false
                 }
