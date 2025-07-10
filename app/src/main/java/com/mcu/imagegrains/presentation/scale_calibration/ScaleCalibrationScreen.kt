@@ -6,16 +6,19 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
@@ -29,7 +32,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -41,8 +44,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.asAndroidBitmap
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
@@ -50,7 +51,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
 import com.mcu.imagegrains.domain.models.ScaleCalibration
 import com.mcu.imagegrains.presentation.SharedSegmentationViewModel
 import java.util.Locale
@@ -64,7 +64,8 @@ fun ScaleCalibrationScreen(
     sharedViewModel: SharedSegmentationViewModel,
     modifier: Modifier = Modifier
 ) {
-    val originalBitmap by sharedViewModel.originalBitmap.collectAsState()
+    // Get safe bitmap copy from ViewModel
+    val safeBitmap = remember { sharedViewModel.getSafeBitmapCopy() }
 
     var startPoint by remember { mutableStateOf<Offset?>(null) }
     var endPoint by remember { mutableStateOf<Offset?>(null) }
@@ -84,8 +85,24 @@ fun ScaleCalibrationScreen(
         } else 0.0
     }
 
+    // Cleanup safe bitmap when screen is disposed
+    DisposableEffect(Unit) {
+        onDispose {
+            safeBitmap?.let { bitmap ->
+                if (!bitmap.isRecycled) {
+                    bitmap.recycle()
+                    println("🔄 Scale calibration bitmap cleaned up")
+                }
+            }
+        }
+    }
+
+
+
     Column(
-        modifier = modifier.fillMaxSize()
+        modifier = modifier
+            .fillMaxSize()
+            //.windowInsetsPadding(WindowInsets.systemBars)
     ) {
         TopAppBar(
             title = {
@@ -173,7 +190,7 @@ fun ScaleCalibrationScreen(
             Box(
                 modifier = Modifier.fillMaxSize()
             ) {
-                originalBitmap?.let { bitmap ->
+                if (safeBitmap != null && !safeBitmap.isRecycled) {
                     Canvas(
                         modifier = Modifier
                             .fillMaxSize()
@@ -192,39 +209,70 @@ fun ScaleCalibrationScreen(
                                 )
                             }
                     ) {
-                        // Draw image
-                        val imagePaint = Paint().asFrameworkPaint()
-                        drawContext.canvas.nativeCanvas.drawBitmap(
-                            bitmap.asImageBitmap().asAndroidBitmap(),
-                            null,
-                            androidx.compose.ui.geometry.Rect(
-                                Offset.Zero,
-                                Offset(size.width, size.height)
-                            ).toAndroidRectF(),
-                            imagePaint
-                        )
-
-                        // Draw line
-                        if (startPoint != null && endPoint != null) {
-                            drawLine(
-                                color = Color.Red,
-                                start = startPoint!!,
-                                end = endPoint!!,
-                                strokeWidth = 3.dp.toPx(),
-                                cap = StrokeCap.Round
+                        // Draw image safely
+                        try {
+                            val imagePaint = Paint().asFrameworkPaint()
+                            drawContext.canvas.nativeCanvas.drawBitmap(
+                                safeBitmap,
+                                null,
+                                androidx.compose.ui.geometry.Rect(
+                                    Offset.Zero,
+                                    Offset(size.width, size.height)
+                                ).toAndroidRectF(),
+                                imagePaint
                             )
 
-                            // Draw start and end circles
-                            drawCircle(
-                                color = Color.Red,
-                                radius = 6.dp.toPx(),
-                                center = startPoint!!
+                            // Draw line
+                            if (startPoint != null && endPoint != null) {
+                                drawLine(
+                                    color = Color.Red,
+                                    start = startPoint!!,
+                                    end = endPoint!!,
+                                    strokeWidth = 3.dp.toPx(),
+                                    cap = StrokeCap.Round
+                                )
+
+                                // Draw start and end circles
+                                drawCircle(
+                                    color = Color.Red,
+                                    radius = 6.dp.toPx(),
+                                    center = startPoint!!
+                                )
+                                drawCircle(
+                                    color = Color.Red,
+                                    radius = 6.dp.toPx(),
+                                    center = endPoint!!
+                                )
+                            }
+                        } catch (e: Exception) {
+                            println("❌ Error drawing bitmap: ${e.message}")
+                            // Draw error placeholder
+                            drawRect(
+                                color = Color.LightGray,
+                                size = size
                             )
-                            drawCircle(
-                                color = Color.Red,
-                                radius = 6.dp.toPx(),
-                                center = endPoint!!
+                        }
+                    }
+                } else {
+                    // Show error if bitmap is not available
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = "Image not available",
+                                color = MaterialTheme.colorScheme.error,
+                                fontSize = 16.sp
                             )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Button(
+                                onClick = { goBack() }
+                            ) {
+                                Text("Go Back")
+                            }
                         }
                     }
                 }

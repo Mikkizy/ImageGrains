@@ -50,9 +50,6 @@ class ONNXMobileSAMProcessor(
             }
 
             // Load models from assets
-            //val encoderBytes = loadModelFromAssets(encoderModelPath)
-            //val predictorBytes = loadModelFromAssets(predictorModelPath)
-
             val encoderBytes = loadModel(R.raw.mobile_sam_encoder)
             val predictorBytes = loadModel(R.raw.mobile_sam_onnx_version)
 
@@ -62,6 +59,10 @@ class ONNXMobileSAMProcessor(
             println("✅ ONNX MobileSAM models loaded successfully")
             println("Encoder inputs: ${encoderSession!!.inputNames}")
             println("Predictor inputs: ${predictorSession!!.inputNames}")
+
+            // Log output names for debugging
+            println("Encoder outputs: ${encoderSession!!.outputNames}")
+            println("Predictor outputs: ${predictorSession!!.outputNames}")
 
             true
         } catch (e: Exception) {
@@ -176,16 +177,57 @@ class ONNXMobileSAMProcessor(
             val inputs = mapOf("input_image" to inputTensor)
             val outputs = encoderSession!!.run(inputs)
 
-            val embeddings = outputs.get("image_embeddings").get() as OnnxTensor
+            // FIXED: Get embeddings using the new ONNX Runtime pattern
+            outputs.use {
+                // Get embeddings - try first output (usually "image_embeddings")
+                val embeddingsValue = outputs.get(0)?.value
 
-            // Cache results
-            cachedEmbeddings = embeddings
-            cachedImageHash = imageHash
-            originalImageShape = originalShape
+                val embeddings = when (embeddingsValue) {
+                    is Array<*> -> {
+                        // Handle multi-dimensional float array from new ONNX Runtime
+                        @Suppress("UNCHECKED_CAST")
+                        val array4D = embeddingsValue as Array<Array<Array<FloatArray>>>
 
-            println("✅ Generated embeddings shape: ${embeddings.info.shape.contentToString()}")
+                        // Convert back to OnnxTensor for caching and further use
+                        val flatArray = mutableListOf<Float>()
+                        val shape = longArrayOf(
+                            array4D.size.toLong(),
+                            array4D[0].size.toLong(),
+                            array4D[0][0].size.toLong(),
+                            array4D[0][0][0].size.toLong()
+                        )
 
-            EmbeddingResult(embeddings, originalShape)
+                        for (b in array4D.indices) {
+                            for (c in array4D[b].indices) {
+                                for (h in array4D[b][c].indices) {
+                                    for (w in array4D[b][c][h].indices) {
+                                        flatArray.add(array4D[b][c][h][w])
+                                    }
+                                }
+                            }
+                        }
+
+                        OnnxTensor.createTensor(
+                            ortEnvironment!!,
+                            FloatBuffer.wrap(flatArray.toFloatArray()),
+                            shape
+                        )
+                    }
+                    else -> {
+                        // Try to get as OnnxTensor directly (older ONNX Runtime)
+                        outputs.get(0) as? OnnxTensor ?: throw Exception("Cannot extract embeddings")
+                    }
+                }
+
+                // Cache results
+                cachedEmbeddings = embeddings
+                cachedImageHash = imageHash
+                originalImageShape = originalShape
+
+                println("✅ Generated embeddings shape: ${embeddings.info.shape.contentToString()}")
+
+                EmbeddingResult(embeddings, originalShape)
+            }
 
         } catch (e: Exception) {
             e.printStackTrace()
@@ -273,31 +315,77 @@ class ONNXMobileSAMProcessor(
 
             // Run inference
             val outputs = predictorSession!!.run(inputs)
-            val masks = outputs.get(0).value as OnnxTensor
 
-            // Convert to boolean array
-            val maskShape = masks.info.shape
-            val height = maskShape[2].toInt()
-            val width = maskShape[3].toInt()
+            // FIXED: Handle outputs using the pattern from your examples
+            outputs.use {
+                val maskValue = outputs.get(0)?.value
 
-            val maskData = masks.floatBuffer
-            val booleanMask = Array(height) { BooleanArray(width) }
+                val booleanMask = when (maskValue) {
+                    is Array<*> -> {
+                        // Handle multi-dimensional array from new ONNX Runtime
+                        @Suppress("UNCHECKED_CAST")
+                        val array4D = maskValue as Array<Array<Array<FloatArray>>>
 
-            for (h in 0 until height) {
-                for (w in 0 until width) {
-                    val value = maskData.get(h * width + w)
-                    booleanMask[h][w] = value > 0f // SAM's default threshold
+                        println("🔍 Mask array shape: [${array4D.size}, ${array4D[0].size}, ${array4D[0][0].size}, ${array4D[0][0][0].size}]")
+
+                        // Extract mask from 4D array [batch, channels, height, width]
+                        val height = array4D[0][0].size
+                        val width = array4D[0][0][0].size
+
+                        Array(height) { h ->
+                            BooleanArray(width) { w ->
+                                array4D[0][0][h][w] > 0f // SAM's default threshold
+                            }
+                        }
+                    }
+                    is FloatArray -> {
+                        // Handle 1D float array
+                        println("🔍 Mask 1D array size: ${maskValue.size}")
+
+                        // Try to determine dimensions (common SAM output sizes)
+                        val possibleSizes = listOf(256, 512, 1024)
+                        val totalSize = maskValue.size
+                        val dimension = possibleSizes.find { it * it == totalSize } ?: 256
+
+                        Array(dimension) { h ->
+                            BooleanArray(dimension) { w ->
+                                maskValue[h * dimension + w] > 0f
+                            }
+                        }
+                    }
+                    else -> {
+                        // Try to get as OnnxTensor (fallback for older versions)
+                        val maskTensor = outputs.get(0) as? OnnxTensor
+
+                        if (maskTensor != null) {
+                            val maskShape = maskTensor.info.shape
+                            val height = maskShape[2].toInt()
+                            val width = maskShape[3].toInt()
+
+                            val maskData = maskTensor.floatBuffer
+                            Array(height) { h ->
+                                BooleanArray(width) { w ->
+                                    val value = maskData.get(h * width + w)
+                                    value > 0f
+                                }
+                            }
+                        } else {
+                            println("❌ Cannot extract mask from output")
+                            return@withContext null
+                        }
+                    }
                 }
+
+                // Clean up tensors
+                coordsTensor.close()
+                labelsTensor.close()
+                maskInputTensor.close()
+                hasMaskInputTensor.close()
+                origImSizeTensor.close()
+
+                println("✅ SAM prediction completed for point ($x, $y)")
+                booleanMask
             }
-
-            // Clean up tensors
-            coordsTensor.close()
-            labelsTensor.close()
-            maskInputTensor.close()
-            hasMaskInputTensor.close()
-            origImSizeTensor.close()
-
-            booleanMask
 
         } catch (e: Exception) {
             e.printStackTrace()

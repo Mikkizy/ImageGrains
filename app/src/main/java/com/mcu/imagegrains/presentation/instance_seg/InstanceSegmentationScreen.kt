@@ -41,7 +41,9 @@ fun InstanceSegmentationScreen(
     }
 
     Column(
-        modifier = modifier.fillMaxSize()
+        modifier = modifier
+            .fillMaxSize()
+            .windowInsetsPadding(WindowInsets.systemBars)
     ) {
         TopAppBar(
             title = {

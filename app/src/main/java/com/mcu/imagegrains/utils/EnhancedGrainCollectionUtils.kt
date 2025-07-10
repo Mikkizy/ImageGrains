@@ -1,287 +1,164 @@
 package com.mcu.imagegrains.utils
 
-import org.locationtech.jts.geom.*
-import org.locationtech.jts.geom.util.GeometryFixer
+import org.locationtech.jts.geom.Polygon
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlin.math.*
 
 object EnhancedGrainCollectionUtils {
 
     /**
-     * Find connected components using spatial indexing for better performance
+     * Find connected components using JTS spatial indexing
      */
     suspend fun findConnectedComponents(
-        allGrains: List<Polygon>,
-        minArea: Double,
-        progressCallback: (Float) -> Unit = {}
-    ): Triple<List<Polygon>, List<Set<Int>>, List<Pair<Int, Int>>> = withContext(Dispatchers.Default) {
+        polygons: List<Polygon>,
+        overlapThreshold: Double = 0.1
+    ): List<List<Polygon>> = withContext(Dispatchers.Default) {
 
-        println("🔄 Finding connected components with spatial indexing...")
+        if (polygons.isEmpty()) return@withContext emptyList()
 
-        // Find overlapping polygons using spatial index
-        val overlappingPairs = SpatialIndexingUtils.findOverlappingPolygons(
-            allGrains,
-            minOverlap = 0.4,
-            progressCallback = { progress -> progressCallback(progress * 0.7f) }
-        )
+        println("🔄 Finding connected components with JTS spatial indexing...")
 
-        progressCallback(0.7f)
+        try {
+            // Use the appropriate method based on dataset size
+            val overlappingGroups = if (polygons.size > 1000) {
+                // For large datasets, use spatial indexing
+                SpatialIndexingUtils.findOverlappingPolygons(polygons, overlapThreshold)
+            } else {
+                // For smaller datasets, use simple method
+                SpatialIndexingUtils.findOverlappingPolygonsSimple(polygons, overlapThreshold)
+            }
 
-        // Build adjacency graph
-        val adjacencyMap = mutableMapOf<Int, MutableSet<Int>>()
-        for (i in allGrains.indices) {
-            adjacencyMap[i] = mutableSetOf()
-        }
-
-        for ((i, j) in overlappingPairs) {
-            adjacencyMap[i]?.add(j)
-            adjacencyMap[j]?.add(i)
-        }
-
-        // Find connected components using DFS
-        val visited = BooleanArray(allGrains.size) { false }
-        val components = mutableListOf<Set<Int>>()
-
-        for (i in allGrains.indices) {
-            if (!visited[i]) {
-                val component = mutableSetOf<Int>()
-                dfsConnectedComponent(i, adjacencyMap, visited, component)
-                if (component.isNotEmpty()) {
-                    components.add(component)
+            // Convert index groups to polygon groups
+            val components = overlappingGroups.map { indexGroup ->
+                indexGroup.mapNotNull { index ->
+                    if (index < polygons.size) polygons[index] else null
                 }
             }
-        }
 
-        progressCallback(0.8f)
+            println("✅ Found ${components.size} connected components")
+            components
 
-        // Collect non-overlapping grains
-        val connectedGrains = components.flatten().toSet()
-        val newGrains = mutableListOf<Polygon>()
+        } catch (e: Exception) {
+            println("❌ Error finding connected components: ${e.message}")
+            e.printStackTrace()
 
-        for (i in allGrains.indices) {
-            if (i !in connectedGrains && allGrains[i].area >= minArea) {
-                val grain = if (!allGrains[i].isValid) {
-                    GeometryFixer.fix(allGrains[i]) as? Polygon ?: allGrains[i]
-                } else {
-                    allGrains[i]
-                }
-                newGrains.add(grain)
-            }
-        }
-
-        progressCallback(1.0f)
-
-        println("✅ Found ${components.size} connected components, ${newGrains.size} non-overlapping grains")
-
-        Triple(newGrains, components, overlappingPairs)
-    }
-
-    private fun dfsConnectedComponent(
-        node: Int,
-        adjacencyMap: Map<Int, Set<Int>>,
-        visited: BooleanArray,
-        component: MutableSet<Int>
-    ) {
-        visited[node] = true
-        component.add(node)
-
-        adjacencyMap[node]?.forEach { neighbor ->
-            if (!visited[neighbor]) {
-                dfsConnectedComponent(neighbor, adjacencyMap, visited, component)
-            }
+            // Fallback: return each polygon as its own component
+            polygons.map { listOf(it) }
         }
     }
 
     /**
-     * Merge overlapping polygons using spatial indexing for efficiency
+     * Merge overlapping polygons within each component
      */
     suspend fun mergeOverlappingPolygons(
-        allGrains: List<Polygon>,
-        newGrains: MutableList<Polygon>,
-        components: List<Set<Int>>,
-        minArea: Double,
-        imagePred: Array<Array<FloatArray>>,
-        progressCallback: (Float) -> Unit = {}
+        components: List<List<Polygon>>
     ): List<Polygon> = withContext(Dispatchers.Default) {
 
-        println("🔄 Merging ${components.size} overlapping polygon groups...")
+        val mergedPolygons = mutableListOf<Polygon>()
 
-        components.forEachIndexed { componentIndex, component ->
-
-            // Get polygons in this component
-            val polygonsInComponent = component.map { allGrains[it] }
-
-            if (polygonsInComponent.isNotEmpty()) {
-                // Find most similar polygon (simplified version)
-                val mostSimilarPolygon = pickMostSimilarPolygon(polygonsInComponent, imagePred)
-
-                // Process difference polygons
-                val differencePolygons = mutableListOf<Polygon>()
-
-                for (polygon in polygonsInComponent) {
-                    if (polygon != mostSimilarPolygon) {
-                        try {
-                            val difference = polygon.difference(mostSimilarPolygon)
-
-                            when (difference) {
-                                is Polygon -> {
-                                    if (difference.area >= minArea) {
-                                        differencePolygons.add(difference)
-                                    }
-                                }
-                                is MultiPolygon -> {
-                                    // Get largest polygon from MultiPolygon
-                                    val largestPoly = (0 until difference.numGeometries)
-                                        .map { difference.getGeometryN(it) as Polygon }
-                                        .maxByOrNull { it.area }
-
-                                    if (largestPoly != null && largestPoly.area >= minArea) {
-                                        differencePolygons.add(largestPoly)
-                                    }
-                                }
-                            }
-                        } catch (e: Exception) {
-                            println("❌ Error computing difference: ${e.message}")
-                        }
-                    }
-                }
-
-                // Select non-overlapping difference polygons using spatial indexing
-                val selectedPolygons = selectNonOverlappingPolygons(
-                    differencePolygons,
-                    minArea,
-                    imagePred
-                )
-
-                // Apply morphological opening (erosion followed by dilation)
-                val openedPolygons = selectedPolygons.mapNotNull { polygon ->
-                    try {
-                        val eroded = polygon.buffer(-5.0) // Erosion
-                        val opened = eroded.buffer(5.0)   // Dilation
-
-                        if (opened is Polygon && opened.area >= minArea) {
-                            opened
-                        } else null
-                    } catch (e: Exception) {
-                        null
-                    }
-                }
-
-                // Add valid polygons to result
-                if (mostSimilarPolygon.area >= minArea && mostSimilarPolygon !in newGrains) {
-                    newGrains.add(mostSimilarPolygon)
-                }
-                newGrains.addAll(openedPolygons)
-            }
-
-            // Update progress
-            val progress = (componentIndex + 1).toFloat() / components.size
-            progressCallback(progress)
-        }
-
-        println("✅ Merged overlapping polygons: ${newGrains.size} final grains")
-        return@withContext newGrains.toList()
-    }
-
-    private fun pickMostSimilarPolygon(
-        polygons: List<Polygon>,
-        imagePred: Array<Array<FloatArray>>
-    ): Polygon {
-        if (polygons.size == 1) return polygons[0]
-
-        // Simplified similarity metric based on grain probability
-        var bestPolygon = polygons[0]
-        var bestScore = Double.MIN_VALUE
-
-        for (polygon in polygons) {
+        components.forEachIndexed { index, component ->
             try {
-                val score = calculatePolygonGrainScore(polygon, imagePred)
-                if (score > bestScore) {
-                    bestScore = score
-                    bestPolygon = polygon
+                println("🔄 Merging component ${index + 1}/${components.size} with ${component.size} polygons...")
+
+                if (component.size == 1) {
+                    mergedPolygons.add(component.first())
+                } else {
+                    val merged = mergePolygonGroup(component)
+                    if (merged != null) {
+                        mergedPolygons.add(merged)
+                    } else {
+                        // If merging fails, keep original polygons
+                        mergedPolygons.addAll(component)
+                    }
                 }
             } catch (e: Exception) {
-                // Continue with next polygon if error
+                println("⚠️ Error merging component $index: ${e.message}")
+                // Add original polygons if merging fails
+                mergedPolygons.addAll(component)
             }
         }
 
-        return bestPolygon
+        println("✅ Merged ${components.size} components into ${mergedPolygons.size} polygons")
+        mergedPolygons
     }
 
-    private fun calculatePolygonGrainScore(
-        polygon: Polygon,
-        imagePred: Array<Array<FloatArray>>
-    ): Double {
-        val envelope = polygon.envelopeInternal
-        val minX = envelope.minX.toInt().coerceAtLeast(0)
-        val maxX = envelope.maxX.toInt().coerceAtMost(imagePred[0].size - 1)
-        val minY = envelope.minY.toInt().coerceAtLeast(0)
-        val maxY = envelope.maxY.toInt().coerceAtMost(imagePred.size - 1)
+    /**
+     * Merge a group of polygons into a single polygon
+     */
+    private fun mergePolygonGroup(polygons: List<Polygon>): Polygon? {
+        return try {
+            when (polygons.size) {
+                0 -> null
+                1 -> polygons.first()
+                else -> {
+                    // Start with first polygon and union with others
+                    var result = polygons.first()
 
-        var grainSum = 0.0
-        var pixelCount = 0
-        val geometryFactory = GeometryFactory()
+                    for (i in 1 until polygons.size) {
+                        val union = result.union(polygons[i])
 
-        for (y in minY..maxY) {
-            for (x in minX..maxX) {
-                val point = geometryFactory.createPoint(Coordinate(x.toDouble(), y.toDouble()))
-                if (polygon.contains(point)) {
-                    grainSum += imagePred[y][x][1] // Grain channel
-                    pixelCount++
+                        // Ensure result is a polygon
+                        result = when {
+                            union is Polygon -> union
+                            union.numGeometries == 1 && union.getGeometryN(0) is Polygon ->
+                                union.getGeometryN(0) as Polygon
+                            else -> {
+                                println("⚠️ Union resulted in non-polygon geometry, keeping original")
+                                result
+                            }
+                        }
+                    }
+
+                    result
                 }
             }
+        } catch (e: Exception) {
+            println("⚠️ Error merging polygon group: ${e.message}")
+            null
         }
-
-        return if (pixelCount > 0) grainSum / pixelCount else 0.0
     }
 
-    private suspend fun selectNonOverlappingPolygons(
-        polygons: List<Polygon>,
-        minArea: Double,
-        imagePred: Array<Array<FloatArray>>
+    /**
+     * Post-process grains by removing overlaps and merging close polygons
+     */
+    suspend fun postProcessGrains(
+        grains: List<Polygon>,
+        minArea: Double = 100.0,
+        overlapThreshold: Double = 0.1
     ): List<Polygon> = withContext(Dispatchers.Default) {
 
-        if (polygons.isEmpty()) return@withContext emptyList()
-        if (polygons.size == 1) {
-            return@withContext if (polygons[0].area >= minArea) polygons else emptyList()
-        }
+        if (grains.isEmpty()) return@withContext emptyList()
 
-        // Use spatial indexing to efficiently find overlaps
-        val overlappingPairs = SpatialIndexingUtils.findOverlappingPolygons(
-            polygons,
-            minOverlap = 0.1
-        )
+        println("🔄 Post-processing ${grains.size} grains...")
 
-        // Start with the most similar polygon
-        val selectedPolygons = mutableListOf<Polygon>()
-        val mostSimilar = pickMostSimilarPolygon(polygons, imagePred)
-        selectedPolygons.add(mostSimilar)
-
-        // Add non-overlapping polygons
-        for (polygon in polygons) {
-            if (polygon == mostSimilar) continue
-            if (polygon.area < minArea) continue
-
-            var hasOverlap = false
-            for (selected in selectedPolygons) {
-                val polyIndex = polygons.indexOf(polygon)
-                val selectedIndex = polygons.indexOf(selected)
-
-                if (overlappingPairs.any {
-                        (it.first == polyIndex && it.second == selectedIndex) ||
-                                (it.first == selectedIndex && it.second == polyIndex)
-                    }) {
-                    hasOverlap = true
-                    break
+        try {
+            // Filter by minimum area first
+            val filteredGrains = grains.filter { grain ->
+                try {
+                    grain.area >= minArea
+                } catch (e: Exception) {
+                    println("⚠️ Error calculating area for grain: ${e.message}")
+                    false
                 }
             }
 
-            if (!hasOverlap) {
-                selectedPolygons.add(polygon)
-            }
-        }
+            println("🔄 After area filtering: ${filteredGrains.size} grains")
 
-        selectedPolygons
+            if (filteredGrains.isEmpty()) return@withContext emptyList()
+
+            // Find connected components
+            val components = findConnectedComponents(filteredGrains, overlapThreshold)
+
+            // Merge overlapping polygons
+            val mergedGrains = mergeOverlappingPolygons(components)
+
+            println("✅ Post-processing completed: ${grains.size} -> ${mergedGrains.size} grains")
+            mergedGrains
+
+        } catch (e: Exception) {
+            println("❌ Error in post-processing: ${e.message}")
+            e.printStackTrace()
+            grains // Return original grains if post-processing fails
+        }
     }
 }

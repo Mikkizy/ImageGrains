@@ -33,10 +33,10 @@ class TFLiteSemanticSegmentationModel(
 
             // Create interpreter options
             val options = Interpreter.Options().apply {
-                setNumThreads(4) // Use multiple threads for better performance
+                setNumThreads(7) // Use multiple threads for better performance
 
                 // Try to use GPU delegate if available
-                val compatList = CompatibilityList()
+                /*val compatList = CompatibilityList()
                 if (compatList.isDelegateSupportedOnThisDevice) {
                     val delegateOptions = compatList.bestOptionsForThisDevice
 
@@ -44,7 +44,7 @@ class TFLiteSemanticSegmentationModel(
                     println("✅ Using GPU delegate for TFLite")
                 } else {
                     println("📱 Using CPU for TFLite (GPU not available)")
-                }
+                }*/
             }
 
             // Create interpreter

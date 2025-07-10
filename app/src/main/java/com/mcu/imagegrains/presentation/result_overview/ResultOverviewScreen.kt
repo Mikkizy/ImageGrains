@@ -64,7 +64,9 @@ fun ResultsOverviewScreen(
     }
 
     Column(
-        modifier = modifier.fillMaxSize()
+        modifier = modifier
+            .fillMaxSize()
+            .windowInsetsPadding(WindowInsets.systemBars)
     ) {
         TopAppBar(
             title = {
@@ -140,12 +142,20 @@ fun ResultsOverviewScreen(
                 }
 
                 item {
-                    Button(
-                        onClick = {
-                            goToHome()
-                        }
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Text("Go to Home")
+                        Button(
+                            modifier = Modifier.fillMaxWidth(0.65f),
+                            onClick = {
+                                goToHome()
+                            }
+                        ) {
+                            Text("Go to Home")
+                        }
                     }
                 }
             }

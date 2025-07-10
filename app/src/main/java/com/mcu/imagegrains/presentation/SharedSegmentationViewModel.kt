@@ -30,6 +30,9 @@ class SharedSegmentationViewModel : ViewModel() {
     private val _originalBitmap = MutableStateFlow<Bitmap?>(null)
     val originalBitmap: StateFlow<Bitmap?> = _originalBitmap.asStateFlow()
 
+    // Keep track of bitmap copies to prevent recycling issues
+    private var bitmapCopies = mutableListOf<Bitmap>()
+
     // Semantic segmentation results
     private val _semanticResult = MutableStateFlow<SemanticSegmentationResult?>(null)
     val semanticResult: StateFlow<SemanticSegmentationResult?> = _semanticResult.asStateFlow()
@@ -94,9 +97,71 @@ class SharedSegmentationViewModel : ViewModel() {
         }
     }
 
+    /**
+     * Set original image and create a copy for safe use across screens
+     */
     fun setOriginalImage(uri: Uri, bitmap: Bitmap) {
+        // Clean up previous bitmaps
+        cleanupPreviousBitmaps()
+
         _originalImageUri.value = uri
-        _originalBitmap.value = bitmap
+
+        // Create a copy of the bitmap to avoid recycling issues
+        val bitmapCopy = createBitmapCopy(bitmap)
+        _originalBitmap.value = bitmapCopy
+
+        if (bitmapCopy != null) {
+            bitmapCopies.add(bitmapCopy)
+            println("✅ Original image set with safe copy: ${bitmapCopy.width}x${bitmapCopy.height}")
+        }
+    }
+
+    /**
+     * Get a safe copy of the original bitmap for use in UI
+     */
+    fun getSafeBitmapCopy(): Bitmap? {
+        val originalBitmap = _originalBitmap.value
+        return if (originalBitmap != null && !originalBitmap.isRecycled) {
+            createBitmapCopy(originalBitmap)?.also { copy ->
+                bitmapCopies.add(copy)
+            }
+        } else {
+            null
+        }
+    }
+
+    /**
+     * Create a safe copy of a bitmap
+     */
+    private fun createBitmapCopy(original: Bitmap): Bitmap? {
+        return try {
+            if (original.isRecycled) {
+                println("⚠️ Cannot copy recycled bitmap")
+                return null
+            }
+
+            val copy = original.copy(original.config ?: Bitmap.Config.ARGB_8888, false)
+            println("✅ Created bitmap copy: ${copy.width}x${copy.height}")
+            copy
+        } catch (e: Exception) {
+            println("❌ Error creating bitmap copy: ${e.message}")
+            null
+        }
+    }
+
+    /**
+     * Clean up previous bitmap copies
+     */
+    private fun cleanupPreviousBitmaps() {
+        bitmapCopies.forEach { bitmap ->
+            if (!bitmap.isRecycled) {
+                bitmap.recycle()
+            }
+        }
+        bitmapCopies.clear()
+
+        // Don't recycle the current original bitmap as it might be in use
+        // Let the caller handle its lifecycle
     }
 
     fun performSemanticSegmentation(context: Context) {
@@ -268,5 +333,16 @@ class SharedSegmentationViewModel : ViewModel() {
         super.onCleared()
         semanticProcessor?.close()
         instanceProcessor?.close()
+        // Clean up all bitmap copies
+        cleanupPreviousBitmaps()
+
+        // Clean up original bitmap
+        _originalBitmap.value?.let { bitmap ->
+            if (!bitmap.isRecycled) {
+                bitmap.recycle()
+            }
+        }
+
+        println("🔄 SharedSegmentationViewModel cleared, bitmaps recycled")
     }
 }

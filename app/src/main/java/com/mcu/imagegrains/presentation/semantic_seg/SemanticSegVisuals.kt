@@ -137,7 +137,7 @@ fun SemanticSegmentationVisualization(
                             label = {
                                 Text(
                                     text = mode.displayName,
-                                    fontSize = 12.sp
+                                    fontSize = 8.sp
                                 )
                             },
                             selected = visualizationMode == mode,

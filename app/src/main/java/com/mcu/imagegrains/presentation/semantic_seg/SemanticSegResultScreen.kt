@@ -1,19 +1,27 @@
 package com.mcu.imagegrains.presentation.semantic_seg
 
+import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
-import android.media.MediaScannerConnection
+import android.net.Uri
+import android.os.Build
+import android.os.Environment
+import android.provider.MediaStore
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.PlayArrow
@@ -45,13 +53,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
-import androidx.navigation.NavController
 import com.mcu.imagegrains.presentation.SharedSegmentationViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
+import java.io.OutputStream
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -78,7 +88,9 @@ fun SemanticSegmentationResultScreen(
     }
 
     Column(
-        modifier = modifier.fillMaxSize()
+        modifier = modifier
+            .fillMaxSize()
+            .windowInsetsPadding(WindowInsets.systemBars)
     ) {
         TopAppBar(
             title = {
@@ -167,11 +179,16 @@ fun SemanticSegmentationResultScreen(
                         modifier = Modifier.weight(1f),
                         onSaveImage = { bitmap ->
                             scope.launch {
-                                val success = saveBitmapToFile(context, bitmap, "semantic_segmentation_result.jpg")
+                                val success = saveBitmapToGallery(context, bitmap)
                                 showSnackbar = if (success) {
                                     "Image saved to gallery"
                                 } else {
                                     "Failed to save image"
+                                }
+                                if (success) {
+                                    Toast.makeText(context, "Image saved to gallery", Toast.LENGTH_SHORT).show()
+                                } else {
+                                    Toast.makeText(context, "Failed to save image", Toast.LENGTH_SHORT).show()
                                 }
                             }
                         },
@@ -232,49 +249,71 @@ fun SemanticSegmentationResultScreen(
     }
 }
 
-private suspend fun saveBitmapToFile(
+private suspend fun saveBitmapToGallery( // Renamed for clarity
     context: Context,
     bitmap: Bitmap,
-    filename: String
+    displayNamePrefix: String = "GrainSegImage"
 ): Boolean = withContext(Dispatchers.IO) {
-    try {
-        val file = File(context.getExternalFilesDir("Images"), filename)
-        file.parentFile?.mkdirs()
+    val name = SimpleDateFormat("yyyy-MM-dd-HH-mm-ss-SSS", Locale.US)
+        .format(System.currentTimeMillis())
+    val filename = "$displayNamePrefix-$name.jpg"
 
-        FileOutputStream(file).use { out ->
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 90, out)
+    val contentValues = ContentValues().apply {
+        put(MediaStore.MediaColumns.DISPLAY_NAME, filename)
+        put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) { // API 29+ (Android 10+)
+            put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + File.separator + "GrainSegImages")
+            put(MediaStore.MediaColumns.IS_PENDING, 1) // Mark as pending until written
+        } else {
+
+            // For < API 29, if you were writing to public storage (requires WRITE_EXTERNAL_STORAGE):
+            // val imagesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+            // val image = File(imagesDir, "GrainSegImages/$filename")
+            // if (!image.parentFile.exists()) image.parentFile.mkdirs()
+            // put(MediaStore.MediaColumns.DATA, image.absolutePath)
+            // For now, the focus is the Q+ error. We'll stick to the Q+ path for MediaStore direct insert.
+        }
+    }
+
+    var imageUri: Uri? = null
+    try {
+        imageUri = context.contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+
+        if (imageUri == null) {
+            // Log.e("SaveBitmap", "Failed to create new MediaStore record.")
+            return@withContext false
         }
 
-        // Add to gallery
-        /*val intent = Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE)
-        intent.data = Uri.fromFile(file)
-        context.sendBroadcast(intent)*/
-
-
-        MediaScannerConnection.scanFile(context, arrayOf(file.toString()),
-            null, null)
-
-        /*val name = SimpleDateFormat("yyyy-MM-dd-HH-mm-ss-SSS", Locale.US)
-            .format(System.currentTimeMillis())
-
-        val contentValues = ContentValues().apply {
-            put(MediaStore.MediaColumns.DATA, file.absolutePath)
-            put(MediaStore.MediaColumns.DISPLAY_NAME, name)
-            put(MediaStore.MediaColumns.MIME_TYPE, "image/jpg")
-            if(Build.VERSION.SDK_INT > Build.VERSION_CODES.P) {
-                put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/GrainSegImages")
+        context.contentResolver.openOutputStream(imageUri)?.use { outputStream: OutputStream ->
+            if (!bitmap.compress(Bitmap.CompressFormat.JPEG, 90, outputStream)) {
+                // Log.e("SaveBitmap", "Failed to save bitmap.")
+                // If saving failed, you might want to delete the pending MediaStore entry
+                context.contentResolver.delete(imageUri, null, null)
+                return@withContext false
             }
         }
 
-
-        context.contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)*/
-
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            contentValues.clear()
+            contentValues.put(MediaStore.MediaColumns.IS_PENDING, 0) // Mark as not pending
+            context.contentResolver.update(imageUri, contentValues, null, null)
+        }
         true
     } catch (e: Exception) {
         e.printStackTrace()
+        // If an error occurs, and we have a URI, delete the incomplete MediaStore entry
+        imageUri?.let { uri ->
+            try {
+                context.contentResolver.delete(uri, null, null)
+            } catch (deleteEx: Exception) {
+                // Log.e("SaveBitmap", "Error deleting MediaStore entry after failure: $deleteEx")
+            }
+        }
         false
     }
 }
+
+
 
 private suspend fun shareBitmap(
     context: Context,

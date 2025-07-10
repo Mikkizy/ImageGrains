@@ -116,8 +116,6 @@ class InstanceSegmentationProcessor(
         }
     }
 
-
-
     /**
      * Perform instance segmentation using ONNX MobileSAM
      */
@@ -217,7 +215,11 @@ class InstanceSegmentationProcessor(
 
             // Post-process grains
             println("🔄 Post-processing grains...")
-            val finalGrains = postProcessGrains(allGrains, minArea, predictionArray)
+            val finalGrains = postProcessGrains(
+                allGrains = allGrains,
+                minArea = minArea,
+                progressCallback = { progress -> progressCallback(0.8f + progress * 0.1f) }
+            )
 
             progressCallback(0.9f)
 
@@ -379,10 +381,13 @@ class InstanceSegmentationProcessor(
         return Triple(mask, sx, sy)
     }
 
+    /**
+     * Updated post-processing to use new EnhancedGrainCollectionUtils API
+     */
     private suspend fun postProcessGrains(
         allGrains: List<Polygon>,
         minArea: Int,
-        imagePred: Array<Array<FloatArray>>,
+        overlapThreshold: Double = 0.1,
         progressCallback: (Float) -> Unit = {}
     ): List<Polygon> = withContext(Dispatchers.Default) {
 
@@ -390,25 +395,42 @@ class InstanceSegmentationProcessor(
 
         println("🔄 Post-processing ${allGrains.size} grains with spatial indexing...")
 
-        // Step 1: Find connected components (30% of progress)
-        val (newGrains, components, overlappingPairs) = EnhancedGrainCollectionUtils.findConnectedComponents(
-            allGrains,
-            minArea.toDouble()
-        ) { progress -> progressCallback(progress * 0.3f) }
+        try {
+            // Use the new EnhancedGrainCollectionUtils API
+            val processedGrains = EnhancedGrainCollectionUtils.postProcessGrains(
+                grains = allGrains,
+                minArea = minArea.toDouble(),
+                overlapThreshold = overlapThreshold
+            )
 
-        // Step 2: Merge overlapping polygons (70% of progress)
-        val finalGrains = EnhancedGrainCollectionUtils.mergeOverlappingPolygons(
-            allGrains,
-            newGrains.toMutableList(),
-            components,
-            minArea.toDouble(),
-            imagePred
-        ) { progress -> progressCallback(0.3f + progress * 0.7f) }
+            progressCallback(1.0f)
 
-        println("✅ Post-processing completed: ${allGrains.size} -> ${finalGrains.size} grains")
+            println("✅ Post-processing completed: ${allGrains.size} -> ${processedGrains.size} grains")
 
-        finalGrains.filter { grain ->
-            grain.area >= minArea && grain.isValid
+            // Additional filtering to ensure quality
+            processedGrains.filter { grain ->
+                try {
+                    grain.area >= minArea && grain.isValid && !grain.isEmpty
+                } catch (e: Exception) {
+                    println("⚠️ Error validating grain: ${e.message}")
+                    false
+                }
+            }
+
+        } catch (e: Exception) {
+            println("❌ Error in post-processing: ${e.message}")
+            e.printStackTrace()
+
+            // Fallback: simple area filtering
+            progressCallback(1.0f)
+            allGrains.filter { grain ->
+                try {
+                    grain.area >= minArea && grain.isValid
+                } catch (e: Exception) {
+                    println("⚠️ Error in fallback filtering: ${e.message}")
+                    false
+                }
+            }
         }
     }
 
