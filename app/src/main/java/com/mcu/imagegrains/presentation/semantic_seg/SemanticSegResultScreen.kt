@@ -53,7 +53,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mcu.imagegrains.presentation.SharedSegmentationViewModel
+import com.mcu.imagegrains.utils.ImageUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -74,11 +76,11 @@ fun SemanticSegmentationResultScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var showSnackbar by remember { mutableStateOf<String?>(null) }
-    val isProcessing by sharedViewModel.isProcessing.collectAsState()
-    val progress by sharedViewModel.progress.collectAsState()
-    val error by sharedViewModel.error.collectAsState()
-    val semanticResult by sharedViewModel.semanticResult.collectAsState()
-    val labelingResult by sharedViewModel.labelingResult.collectAsState()
+    val isProcessing by sharedViewModel.isProcessing.collectAsStateWithLifecycle()
+    val progress by sharedViewModel.progress.collectAsStateWithLifecycle()
+    val error by sharedViewModel.error.collectAsStateWithLifecycle()
+    val semanticResult by sharedViewModel.semanticResult.collectAsStateWithLifecycle()
+    val labelingResult by sharedViewModel.labelingResult.collectAsStateWithLifecycle()
 
     // Start processing when screen loads
     LaunchedEffect(Unit) {
@@ -179,7 +181,7 @@ fun SemanticSegmentationResultScreen(
                         modifier = Modifier.weight(1f),
                         onSaveImage = { bitmap ->
                             scope.launch {
-                                val success = saveBitmapToGallery(context, bitmap)
+                                val success = ImageUtils.saveBitmapToGallery(context, bitmap)
                                 showSnackbar = if (success) {
                                     "Image saved to gallery"
                                 } else {
@@ -194,7 +196,7 @@ fun SemanticSegmentationResultScreen(
                         },
                         onShareImage = { bitmap ->
                             scope.launch {
-                                shareBitmap(context, bitmap)
+                                ImageUtils.shareBitmap(context, bitmap)
                             }
                         }
                     )
@@ -249,99 +251,3 @@ fun SemanticSegmentationResultScreen(
     }
 }
 
-private suspend fun saveBitmapToGallery( // Renamed for clarity
-    context: Context,
-    bitmap: Bitmap,
-    displayNamePrefix: String = "GrainSegImage"
-): Boolean = withContext(Dispatchers.IO) {
-    val name = SimpleDateFormat("yyyy-MM-dd-HH-mm-ss-SSS", Locale.US)
-        .format(System.currentTimeMillis())
-    val filename = "$displayNamePrefix-$name.jpg"
-
-    val contentValues = ContentValues().apply {
-        put(MediaStore.MediaColumns.DISPLAY_NAME, filename)
-        put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) { // API 29+ (Android 10+)
-            put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + File.separator + "GrainSegImages")
-            put(MediaStore.MediaColumns.IS_PENDING, 1) // Mark as pending until written
-        } else {
-
-            // For < API 29, if you were writing to public storage (requires WRITE_EXTERNAL_STORAGE):
-            // val imagesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
-            // val image = File(imagesDir, "GrainSegImages/$filename")
-            // if (!image.parentFile.exists()) image.parentFile.mkdirs()
-            // put(MediaStore.MediaColumns.DATA, image.absolutePath)
-            // For now, the focus is the Q+ error. We'll stick to the Q+ path for MediaStore direct insert.
-        }
-    }
-
-    var imageUri: Uri? = null
-    try {
-        imageUri = context.contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
-
-        if (imageUri == null) {
-            // Log.e("SaveBitmap", "Failed to create new MediaStore record.")
-            return@withContext false
-        }
-
-        context.contentResolver.openOutputStream(imageUri)?.use { outputStream: OutputStream ->
-            if (!bitmap.compress(Bitmap.CompressFormat.JPEG, 90, outputStream)) {
-                // Log.e("SaveBitmap", "Failed to save bitmap.")
-                // If saving failed, you might want to delete the pending MediaStore entry
-                context.contentResolver.delete(imageUri, null, null)
-                return@withContext false
-            }
-        }
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            contentValues.clear()
-            contentValues.put(MediaStore.MediaColumns.IS_PENDING, 0) // Mark as not pending
-            context.contentResolver.update(imageUri, contentValues, null, null)
-        }
-        true
-    } catch (e: Exception) {
-        e.printStackTrace()
-        // If an error occurs, and we have a URI, delete the incomplete MediaStore entry
-        imageUri?.let { uri ->
-            try {
-                context.contentResolver.delete(uri, null, null)
-            } catch (deleteEx: Exception) {
-                // Log.e("SaveBitmap", "Error deleting MediaStore entry after failure: $deleteEx")
-            }
-        }
-        false
-    }
-}
-
-
-
-private suspend fun shareBitmap(
-    context: Context,
-    bitmap: Bitmap
-) = withContext(Dispatchers.IO) {
-    try {
-        val file = File(context.cacheDir, "shared_segmentation_result.jpg")
-        FileOutputStream(file).use { out ->
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 90, out)
-        }
-
-        val uri = FileProvider.getUriForFile(
-            context,
-            "${context.packageName}.fileprovider",
-            file
-        )
-
-        withContext(Dispatchers.Main) {
-            val shareIntent = Intent().apply {
-                action = Intent.ACTION_SEND
-                type = "image/jpeg"
-                putExtra(Intent.EXTRA_STREAM, uri)
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            }
-
-            context.startActivity(Intent.createChooser(shareIntent, "Share Segmentation Result"))
-        }
-    } catch (e: Exception) {
-        e.printStackTrace()
-    }
-}

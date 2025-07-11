@@ -21,6 +21,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.mcu.imagegrains.R
 import com.mcu.imagegrains.domain.models.GrainStatistics
@@ -41,7 +42,7 @@ fun ResultsOverviewScreen(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val scaledGrainData by sharedViewModel.scaledGrainData.collectAsState()
+    val scaledGrainData by sharedViewModel.scaledGrainData.collectAsStateWithLifecycle()
 
     var showExportDialog by remember { mutableStateOf(false) }
     var histogramBitmap by remember { mutableStateOf<android.graphics.Bitmap?>(null) }

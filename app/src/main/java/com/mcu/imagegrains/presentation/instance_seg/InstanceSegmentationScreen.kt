@@ -1,23 +1,57 @@
 package com.mcu.imagegrains.presentation.instance_seg
 
+import android.widget.Toast
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.ProgressIndicatorDefaults
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.mcu.imagegrains.R
 import com.mcu.imagegrains.presentation.SharedSegmentationViewModel
+import com.mcu.imagegrains.utils.ImageUtils
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,11 +62,13 @@ fun InstanceSegmentationScreen(
     sharedViewModel: SharedSegmentationViewModel,
     modifier: Modifier = Modifier
 ) {
-    val isProcessing by sharedViewModel.isProcessing.collectAsState()
-    val progress by sharedViewModel.progress.collectAsState()
-    val error by sharedViewModel.error.collectAsState()
-    val instanceResult by sharedViewModel.instanceResult.collectAsState()
-    val scaleCalibration by sharedViewModel.scaleCalibration.collectAsState()
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val isProcessing by sharedViewModel.isProcessing.collectAsStateWithLifecycle()
+    val progress by sharedViewModel.progress.collectAsStateWithLifecycle()
+    val error by sharedViewModel.error.collectAsStateWithLifecycle()
+    val instanceResult by sharedViewModel.instanceResult.collectAsStateWithLifecycle()
+    val scaleCalibration by sharedViewModel.scaleCalibration.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
         if (instanceResult == null && !isProcessing) {
@@ -55,7 +91,33 @@ fun InstanceSegmentationScreen(
             },
             navigationIcon = {
                 IconButton(onClick = { goBack() }) {
-                    Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                }
+            },
+            actions = {
+                if (instanceResult != null) {
+                    instanceResult!!.finalVisualization.let { bitmap ->
+                        IconButton(onClick = {
+                            scope.launch {
+                                val success = ImageUtils.saveBitmapToGallery(context, bitmap, "MaskedImage")
+                                if (success) {
+                                    Toast.makeText(context, "Image saved to gallery", Toast.LENGTH_SHORT).show()
+                                } else {
+                                    Toast.makeText(context, "Failed to save image", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        }) {
+                            Icon(painter = painterResource(R.drawable.ic_download), contentDescription = "Save")
+                        }
+
+                        IconButton(onClick = {
+                            scope.launch {
+                                ImageUtils.shareBitmap(context, bitmap)
+                            }
+                        }) {
+                            Icon(Icons.Default.Share, contentDescription = "Share")
+                        }
+                    }
                 }
             }
         )
@@ -70,8 +132,12 @@ fun InstanceSegmentationScreen(
                     verticalArrangement = Arrangement.Center
                 ) {
                     CircularProgressIndicator(
-                        progress = progress,
-                        modifier = Modifier.size(64.dp)
+                        progress = { progress },
+                        modifier = Modifier.size(64.dp),
+                        color = ProgressIndicatorDefaults.circularColor,
+                        strokeWidth = ProgressIndicatorDefaults.CircularStrokeWidth,
+                        trackColor = ProgressIndicatorDefaults.circularIndeterminateTrackColor,
+                        strokeCap = ProgressIndicatorDefaults.CircularDeterminateStrokeCap,
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))

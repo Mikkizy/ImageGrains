@@ -8,6 +8,8 @@ import androidx.lifecycle.viewModelScope
 import com.mcu.imagegrains.domain.CompleteSegmentationResult
 import com.mcu.imagegrains.domain.GrainLabelingProcessor
 import com.mcu.imagegrains.domain.InstanceSegmentationProcessor
+import com.mcu.imagegrains.domain.OptimizedInstanceSegmentationProcessor
+import com.mcu.imagegrains.domain.OptimizedProcessingStats
 import com.mcu.imagegrains.domain.SemanticSegmentationProcessor
 import com.mcu.imagegrains.domain.SemanticSegmentationResult
 import com.mcu.imagegrains.domain.models.GrainProperties
@@ -64,7 +66,7 @@ class SharedSegmentationViewModel : ViewModel() {
 
     // Processors
     private var semanticProcessor: SemanticSegmentationProcessor? = null
-    private var instanceProcessor: InstanceSegmentationProcessor? = null
+    private var instanceProcessor: OptimizedInstanceSegmentationProcessor? = null
     private val labelingProcessor = GrainLabelingProcessor()
 
     fun initializeModels(context: Context) {
@@ -80,7 +82,7 @@ class SharedSegmentationViewModel : ViewModel() {
                 val semanticInit = semanticProcessor?.initialize() ?: false
 
                 // Initialize instance segmentation models
-                instanceProcessor = InstanceSegmentationProcessor(
+                instanceProcessor = OptimizedInstanceSegmentationProcessor(
                     context
                 )
                 val instanceInit = instanceProcessor?.initialize() ?: false
