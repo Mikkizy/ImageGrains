@@ -331,6 +331,11 @@ class SharedSegmentationViewModel : ViewModel() {
         _error.value = null
     }
 
+    fun clearResults() {
+        _semanticResult.value = null
+        _instanceResult.value = null
+    }
+
     override fun onCleared() {
         super.onCleared()
         semanticProcessor?.close()

@@ -154,6 +154,7 @@ fun ResultsOverviewScreen(
                             modifier = Modifier.fillMaxWidth(0.65f),
                             onClick = {
                                 goToHome()
+                                sharedViewModel.clearResults()
                             }
                         ) {
                             Text("Go to Home")

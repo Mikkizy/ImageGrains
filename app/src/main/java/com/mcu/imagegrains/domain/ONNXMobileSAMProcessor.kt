@@ -47,11 +47,16 @@ class ONNXMobileSAMProcessor(
                 } catch (e: Exception) {
                     println("📱 NNAPI not available, using CPU")
                 }
+
+                setOptimizationLevel(OrtSession.SessionOptions.OptLevel.ALL_OPT)
+                setIntraOpNumThreads(4) // Use more threads for quantized
+                setInterOpNumThreads(1)
+                setExecutionMode(OrtSession.SessionOptions.ExecutionMode.PARALLEL)
             }
 
             // Load models from assets
             val encoderBytes = loadModel(R.raw.mobile_sam_encoder)
-            val predictorBytes = loadModel(R.raw.mobile_sam_onnx_version)
+            val predictorBytes = loadModel(R.raw.mobile_sam_onnx_quantized)
 
             encoderSession = ortEnvironment!!.createSession(encoderBytes, sessionOptions)
             predictorSession = ortEnvironment!!.createSession(predictorBytes, sessionOptions)
