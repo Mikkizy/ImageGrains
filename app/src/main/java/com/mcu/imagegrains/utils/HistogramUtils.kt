@@ -54,14 +54,32 @@ object HistogramUtils {
     /**
      * Calculate Empirical Cumulative Distribution Function (ECDF)
      */
-    private fun calculateECDF(values: List<Double>): List<Pair<Double, Double>> {
+    /**
+     * Calculate ECDF with detailed debugging
+     */
+    private fun calculateECDF(values: List<Double>, axisName: String): List<Pair<Double, Double>> {
         val sortedValues = values.sorted()
         val ecdf = mutableListOf<Pair<Double, Double>>()
 
+        println("🔍 Calculating ECDF for $axisName:")
+        println("   Raw values (first 10): ${values.take(10).map { "%.2f".format(it) }}")
+        println("   Sorted values (first 10): ${sortedValues.take(10).map { "%.2f".format(it) }}")
+        println("   Sorted values (last 10): ${sortedValues.takeLast(10).map { "%.2f".format(it) }}")
+        println("   Count: ${sortedValues.size}")
+        println("   Min: ${"%.2f".format(sortedValues.first())} mm")
+        println("   Max: ${"%.2f".format(sortedValues.last())} mm")
+        println("   Median: ${"%.2f".format(sortedValues[sortedValues.size/2])} mm")
+
         for (i in sortedValues.indices) {
-            val phi = sortedValues[i]
-            val cumulativeProb = 1.0 - (i + 1).toDouble() / sortedValues.size // Reverse ECDF like Python
+            val sizeMM = sortedValues[i]
+            val phi = -log2(sizeMM)
+            val cumulativeProb = (i + 1).toDouble() / sortedValues.size
             ecdf.add(Pair(phi, cumulativeProb))
+
+            // Debug key points
+            if (i == 0 || i == sortedValues.size/2 || i == sortedValues.size-1) {
+                println("   Point ${i+1}: size=${"%.2f".format(sizeMM)}mm, phi=${"%.2f".format(phi)}, ECDF=${"%.3f".format(cumulativeProb)}")
+            }
         }
 
         return ecdf
@@ -73,16 +91,45 @@ object HistogramUtils {
     private fun getAreaWeightedDistribution(grainSizes: List<Double>, areas: List<Double>): List<Double> {
         if (areas.isEmpty()) return grainSizes
 
+        // 🎯 SAFETY CHECK: Ensure lists have same size
+        if (grainSizes.size != areas.size) {
+            println("⚠️ Warning: grainSizes.size=${grainSizes.size} != areas.size=${areas.size}")
+            println("   Using minimum size to avoid crash")
+            val minSize = minOf(grainSizes.size, areas.size)
+            return getAreaWeightedDistribution(grainSizes.take(minSize), areas.take(minSize))
+        }
+
         val meanArea = areas.average()
         val areaWeightedGrainSizes = mutableListOf<Double>()
 
+        println("🔍 Area weighting debug:")
+        println("   Mean area: ${"%.2f".format(meanArea)}")
+        println("   Processing ${grainSizes.size} grains")
+
+        // 🎯 SAFE ITERATION: Use indices instead of separate loops
         for (i in grainSizes.indices) {
-            val weight = (areas[i] / (0.5 * meanArea)).toInt().coerceAtLeast(1)
-            repeat(weight) {
+            try {
+                val grainSize = grainSizes[i]
+                val area = areas[i]
+                val weight = maxOf(1, (area / (0.5 * meanArea)).toInt()) // Ensure at least 1
+
+                // Debug extreme weights
+                if (weight > 100) {
+                    println("   ⚠️ Large weight: grain $i, area=${"%.2f".format(area)}, weight=$weight")
+                }
+
+                repeat(weight) {
+                    areaWeightedGrainSizes.add(grainSize)
+                }
+
+            } catch (e: Exception) {
+                println("   ❌ Error at index $i: ${e.message}")
+                // Add the grain at least once to avoid losing data
                 areaWeightedGrainSizes.add(grainSizes[i])
             }
         }
 
+        println("   Original count: ${grainSizes.size}, Weighted count: ${areaWeightedGrainSizes.size}")
         return areaWeightedGrainSizes
     }
 
@@ -98,16 +145,76 @@ object HistogramUtils {
         useAreaWeighting: Boolean = false // New: apply area weighting
     ): HistogramData {
 
-        // Convert to millimeters if needed
+        println("🔍 Scale calibration unit: ${grainData.scaleCalibration.unit}")
+
         val conversionFactor = when {
             convertToMillimeters && grainData.scaleCalibration.unit == "cm" -> 10.0
             convertToMillimeters && grainData.scaleCalibration.unit == "inches" -> 25.4
             convertToMillimeters && grainData.scaleCalibration.unit == "meters" -> 1000.0
+            convertToMillimeters && grainData.scaleCalibration.unit == "mm" -> 1.0
             else -> 1.0
         }
 
         var majorAxisLengths = grainData.scaledGrains.map { it.majorAxisLength * conversionFactor }
         var minorAxisLengths = grainData.scaledGrains.map { it.minorAxisLength * conversionFactor }
+
+        println("🔍 Before area weighting:")
+        println("   Major axis count: ${majorAxisLengths.size}")
+        println("   Minor axis count: ${minorAxisLengths.size}")
+        println("   Grain data count: ${grainData.scaledGrains.size}")
+
+        // 🎯 FIXED: Apply area weighting with proper error handling
+        if (useAreaWeighting) {
+            try {
+                // Convert areas to mm² using squared conversion factor
+                val areas = grainData.scaledGrains.map { it.area * conversionFactor * conversionFactor }
+
+                println("🔍 Area weighting debug:")
+                println("   Areas count: ${areas.size}")
+                println("   Major lengths count: ${majorAxisLengths.size}")
+                println("   Minor lengths count: ${minorAxisLengths.size}")
+
+                // Ensure all lists have the same size
+                val minCount = minOf(majorAxisLengths.size, minorAxisLengths.size, areas.size)
+                if (minCount < majorAxisLengths.size) {
+                    println("   ⚠️ Trimming to minimum count: $minCount")
+                    majorAxisLengths = majorAxisLengths.take(minCount)
+                    minorAxisLengths = minorAxisLengths.take(minCount)
+                }
+
+                majorAxisLengths = getAreaWeightedDistribution(majorAxisLengths, areas.take(minCount))
+                minorAxisLengths = getAreaWeightedDistribution(minorAxisLengths, areas.take(minCount))
+
+                println("🔍 After area weighting:")
+                println("   Major axis count: ${majorAxisLengths.size}")
+                println("   Minor axis count: ${minorAxisLengths.size}")
+
+            } catch (e: Exception) {
+                println("❌ Area weighting failed: ${e.message}")
+                println("   Continuing without area weighting...")
+                // Continue without area weighting if it fails
+            }
+        }
+
+        // Calculate ECDF
+        val majorAxisECDF = calculateECDFFromMM(majorAxisLengths, "Major Axis")
+        val minorAxisECDF = calculateECDFFromMM(minorAxisLengths, "Minor Axis")
+
+        // Test specific size points
+        val testSizes = listOf(2.0, 3.0, 4.0, 5.0)
+        println("🔍 ECDF comparison at test points:")
+        for (testSize in testSizes) {
+            val majorECDFAtSize = majorAxisLengths.count { it <= testSize }.toDouble() / majorAxisLengths.size
+            val minorECDFAtSize = minorAxisLengths.count { it <= testSize }.toDouble() / minorAxisLengths.size
+
+            println("   At ${testSize}mm: Major ECDF=${"%.3f".format(majorECDFAtSize)}, Minor ECDF=${"%.3f".format(minorECDFAtSize)}")
+
+            if (minorECDFAtSize > majorECDFAtSize) {
+                println("     ✅ Correct: Minor ECDF > Major ECDF (orange should be above blue)")
+            } else {
+                println("     ❌ Wrong: Major ECDF > Minor ECDF")
+            }
+        }
 
         // 🎯 AREA WEIGHTING (like Python)
         if (useAreaWeighting) {
@@ -116,7 +223,7 @@ object HistogramUtils {
             minorAxisLengths = getAreaWeightedDistribution(minorAxisLengths, areas)
         }
 
-        // Smart x-axis limits
+        // Smart x-axis limit
         val actualXLimits = when {
             xlimits != null -> xlimits
             useDataBasedLimits -> {
@@ -138,38 +245,22 @@ object HistogramUtils {
         val phiMajor = majorAxisLengths.map { -log2(it) }
         val phiMinor = minorAxisLengths.map { -log2(it) }
 
-        // Convert x-limits to phi scale (like Python)
         val phiMax = ceil(-log2(actualXLimits.first)).toInt().toDouble()
         val phiMin = floor(-log2(actualXLimits.second)).toInt().toDouble()
 
-        // Create bins (like Python: np.arange(phi_min, phi_max, binsize))
         val bins = mutableListOf<Double>()
         var currentBin = phiMin
         while (currentBin < phiMax) {
             bins.add(currentBin)
             currentBin += binSize
         }
-        bins.add(phiMax) // Add final bin edge
+        bins.add(phiMax)
 
-        // Calculate histograms
         val majorCounts = calculateHistogram(phiMajor, bins)
         val minorCounts = calculateHistogram(phiMinor, bins)
-
-        // 📈 CALCULATE ECDF CURVES (like Python)
-        val majorAxisECDF = calculateECDF(phiMajor)
-        val minorAxisECDF = calculateECDF(phiMinor)
-
-        // Find matching grain size classes
         val matchingClasses = findMatchingGrainSizeClasses(phiMin, phiMax)
-
         val maxCount = maxOf(majorCounts.maxOrNull() ?: 0, minorCounts.maxOrNull() ?: 0)
         val countInterval = calculateOptimalCountInterval(maxCount)
-
-        println("📊 Enhanced histogram created:")
-        println("   📊 Major axis ECDF points: ${majorAxisECDF.size}")
-        println("   📊 Minor axis ECDF points: ${minorAxisECDF.size}")
-        println("   📊 Bin size: $binSize")
-        println("   📊 Phi range: ${phiMin.format(2)} - ${phiMax.format(2)}")
 
         return HistogramData(
             bins = bins,
@@ -209,6 +300,32 @@ object HistogramUtils {
         }
 
         return counts
+    }
+
+    /**
+     * Calculate ECDF from millimeter values and convert to phi for plotting
+     */
+    private fun calculateECDFFromMM(values: List<Double>, axisName: String): List<Pair<Double, Double>> {
+        val phiValues = values.map { -log2(it) }
+        val sortedPhiValues = phiValues.sorted() // Sort phi ascending (small grains to large grains)
+
+        val ecdf = mutableListOf<Pair<Double, Double>>()
+
+        println("🔍 Calculating Standard ECDF for $axisName:")
+
+        // Create standard ECDF (0 to 1) - NO REVERSAL
+        for (i in sortedPhiValues.indices) {
+            val phi = sortedPhiValues[i]
+            val cumulativeProb = (i + 1).toDouble() / sortedPhiValues.size
+            ecdf.add(Pair(phi, cumulativeProb))
+
+            if (i < 3 || i == sortedPhiValues.size - 1) {
+                val originalSize = 2.0.pow(-phi)
+                println("   Point ${i+1}: phi=${"%.2f".format(phi)} (${"%.1f".format(originalSize)}mm) → ECDF=${"%.3f".format(cumulativeProb)}")
+            }
+        }
+
+        return ecdf
     }
 
     private fun findMatchingGrainSizeClasses(phiMin: Double, phiMax: Double): List<GrainSizeClass> {
@@ -377,7 +494,7 @@ object HistogramUtils {
                 )
             }
 
-            // 📈 DRAW ECDF CURVES (like Python twin axis)
+            // 📈 DRAW ECDF CURVES
             if (showECDFCurves && histogramData.majorAxisECDF.isNotEmpty()) {
 
                 // Major axis ECDF (blue line)
@@ -385,7 +502,7 @@ object HistogramUtils {
                 var firstPoint = true
                 for ((phi, ecdf) in histogramData.majorAxisECDF) {
                     val x = padding + ((phi - histogramData.bins.first()) / phiRange) * plotWidth
-                    val y = padding + (1.0 - ecdf) * plotHeight // Invert Y for canvas coordinates
+                    val y = height - padding - (ecdf * plotHeight) // 🎯 FIXED
 
                     if (firstPoint) {
                         majorPath.moveTo(x.toFloat(), y.toFloat())
@@ -401,7 +518,7 @@ object HistogramUtils {
                 firstPoint = true
                 for ((phi, ecdf) in histogramData.minorAxisECDF) {
                     val x = padding + ((phi - histogramData.bins.first()) / phiRange) * plotWidth
-                    val y = padding + (1.0 - ecdf) * plotHeight // Invert Y for canvas coordinates
+                    val y = height - padding - (ecdf * plotHeight) // 🎯 FIXED
 
                     if (firstPoint) {
                         minorPath.moveTo(x.toFloat(), y.toFloat())

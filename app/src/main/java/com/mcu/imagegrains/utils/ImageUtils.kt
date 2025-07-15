@@ -28,7 +28,7 @@ object ImageUtils {
     /**
      * Compress image to maximum 5 megapixels
      */
-    fun compressImageTo4MP(context: Context, uri: Uri): Uri? {
+    fun compressImageTo3MP(context: Context, uri: Uri): Uri? {
         return try {
             val inputStream = context.contentResolver.openInputStream(uri)
             val originalBitmap = BitmapFactory.decodeStream(inputStream)
@@ -36,7 +36,7 @@ object ImageUtils {
 
             if (originalBitmap == null) return null
 
-            val compressedBitmap = compressToMaxPixels(originalBitmap, 4_000_000, context)
+            val compressedBitmap = compressToMaxPixels(originalBitmap, 3_000_000, context)
             val correctedBitmap = correctImageOrientation(context, uri, compressedBitmap)
 
             // Save compressed image

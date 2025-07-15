@@ -65,7 +65,10 @@ fun GrainSegmentationNavigation(
 
         composable<SemanticSegmentationScreen>{
             SemanticSegmentationResultScreen(
-                goBack = { navController.popBackStack() },
+                goBack = {
+                    sharedSegmentationViewModel.clearResults()
+                    navController.popBackStack()
+                         },
                 navigateToScaleCalibration = {
                     // Navigate to scale calibration screen
                     navController.navigate(ScaleCalibrationScreen)

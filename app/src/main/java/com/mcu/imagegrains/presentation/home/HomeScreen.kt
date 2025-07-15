@@ -75,7 +75,7 @@ fun HomeScreen(
                 isProcessing = true
                 try {
                     // Check if image needs compression
-                    val processedUri = ImageUtils.compressImageTo4MP(context, selectedUri)
+                    val processedUri = ImageUtils.compressImageTo3MP(context, selectedUri)
                     if (processedUri == null) {
                         Toast.makeText(context, "Image compression failed", Toast.LENGTH_SHORT).show()
                     }
@@ -218,7 +218,7 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = "• Camera photos will be optimized to the nearest 4MP resolution\n" +
-                            "• Large uploaded images are automatically compressed to 4MP\n" +
+                            "• Large uploaded images are automatically compressed to 3MP\n" +
                             "• Ensure good lighting for best results",
                     fontSize = 14.sp,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),

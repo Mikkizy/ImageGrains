@@ -28,6 +28,7 @@ import com.mcu.imagegrains.domain.models.GrainStatistics
 import com.mcu.imagegrains.domain.models.ScaledGrainData
 import com.mcu.imagegrains.presentation.SharedSegmentationViewModel
 import com.mcu.imagegrains.utils.CSVExportUtils
+import com.mcu.imagegrains.utils.GrainHistogram
 import com.mcu.imagegrains.utils.HistogramUtils
 import kotlinx.coroutines.launch
 import java.util.Locale
@@ -50,21 +51,26 @@ fun ResultsOverviewScreen(
     // Generate histogram when data is available
     LaunchedEffect(scaledGrainData) {
         scaledGrainData?.let { data ->
-            val histogramData = HistogramUtils.createHistogramData(
-                grainData = data,
-                binSize = 0.1, // Smaller bins like Python
-                xlimits = null,
-                convertToMillimeters = true,
-                useDataBasedLimits = true,
-                useAreaWeighting = true // Set to true if you want area weighting
+            println("🧪 Simple test:")
+            println("   Scale unit: ${data.scaleCalibration.unit}")
+            println("   Major axis stats from UI: mean=4.07, max=6.64")
+            println("   Raw major axis (first 5): ${data.scaledGrains.take(5).map { "%.2f".format(it.majorAxisLength) }}")
+
+            // Test what happens with no conversion:
+            val rawMajor = data.scaledGrains.map { it.majorAxisLength }
+            println("   Raw major mean: ${"%.2f".format(rawMajor.average())}")
+            val histogramData = GrainHistogram.createHistogramData(
+                data.scaledGrains.map { it.majorAxisLength * 10 },
+                data.scaledGrains.map { it.minorAxisLength * 10 },
+                data.scaledGrains.map { it.area * 100},      // or emptyList()
+                binSize = 0.1,
+                xLimits = null
             )
 
-            histogramBitmap = HistogramUtils.createHistogramBitmap(
-                histogramData = histogramData,
+            histogramBitmap = GrainHistogram.createHistogramBitmap(
+                histogramData,
                 width = 800,
-                height = 600,
-                showGrainClassification = false, // 🎯 Colored background regions
-                showECDFCurves = true // 🎯 Blue and orange ECDF lines
+                height = 600
             )
         }
     }
