@@ -28,7 +28,7 @@ object ImageUtils {
     /**
      * Compress image to maximum 5 megapixels
      */
-    fun compressImageTo5MP(context: Context, uri: Uri): Uri? {
+    fun compressImageTo4MP(context: Context, uri: Uri): Uri? {
         return try {
             val inputStream = context.contentResolver.openInputStream(uri)
             val originalBitmap = BitmapFactory.decodeStream(inputStream)
@@ -36,16 +36,12 @@ object ImageUtils {
 
             if (originalBitmap == null) return null
 
-            val compressedBitmap = compressToMaxPixels(originalBitmap, 5_000_000)
+            val compressedBitmap = compressToMaxPixels(originalBitmap, 4_000_000, context)
             val correctedBitmap = correctImageOrientation(context, uri, compressedBitmap)
 
             // Save compressed image
             val file = File(context.cacheDir, "compressed_${System.currentTimeMillis()}.jpg")
-            if (!saveImageToFile(correctedBitmap, file)) {
-                Toast.makeText(context, "Failed to save compressed image", Toast.LENGTH_SHORT).show()
-            } else {
-                Toast.makeText(context, "Image compressed successfully", Toast.LENGTH_SHORT).show()
-            }
+            saveImageToFile(correctedBitmap, file)
 
             // Clean up
             if (compressedBitmap != originalBitmap) {
@@ -65,7 +61,7 @@ object ImageUtils {
     /**
      * Compress bitmap to maximum specified pixels
      */
-    private fun compressToMaxPixels(bitmap: Bitmap, maxPixels: Int): Bitmap {
+    private fun compressToMaxPixels(bitmap: Bitmap, maxPixels: Int, context: Context): Bitmap {
         val currentPixels = bitmap.width * bitmap.height
 
         if (currentPixels <= maxPixels) {
@@ -75,6 +71,8 @@ object ImageUtils {
         val scaleFactor = sqrt(maxPixels.toDouble() / currentPixels.toDouble()).toFloat()
         val newWidth = (bitmap.width * scaleFactor).toInt()
         val newHeight = (bitmap.height * scaleFactor).toInt()
+
+        Toast.makeText(context, "Image compressed to $newWidth x $newHeight", Toast.LENGTH_SHORT).show()
 
         return bitmap.scale(newWidth, newHeight)
     }

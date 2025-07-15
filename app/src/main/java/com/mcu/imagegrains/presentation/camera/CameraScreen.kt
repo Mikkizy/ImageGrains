@@ -91,6 +91,10 @@ fun CameraScreen(
                             preview,
                             imageCaptureUseCase
                         )
+                        println("ImageCaptureUseCaseResolution: ${imageCaptureUseCase.resolutionInfo}")
+                        println("ImageCaptureUseCaseResolutionInfo: ${imageCaptureUseCase.resolutionInfo?.resolution}")
+                        println("ImageCaptureUseCaseResolution: ${imageCaptureUseCase.resolutionInfo?.toString()}")
+                        println("ImageCaptureUseCaseResolutionHeightWidth: ${imageCaptureUseCase.resolutionInfo?.resolution?.height} by ${imageCaptureUseCase.resolutionInfo?.resolution?.width}")
                     } catch (exc: Exception) {
                         exc.printStackTrace()
                     }
@@ -140,9 +144,6 @@ fun CameraScreen(
                                         "${context.packageName}.fileprovider",
                                         photoFile
                                     )
-//                                    navController.navigate(
-//                                        "photo_display/${Uri.encode(photoUri.toString())}"
-//                                    )
                                     navigateToPhotoDisplay("${Uri.encode(photoUri.toString())}")
                                 }
                             }
@@ -181,7 +182,7 @@ fun CameraScreen(
             )
         ) {
             Text(
-                text = "2000×2000",
+                text = if (imageCapture?.resolutionInfo?.resolution.toString() == "null") " " else imageCapture?.resolutionInfo?.resolution.toString(),
                 color = Color.White,
                 modifier = Modifier.padding(8.dp)
             )

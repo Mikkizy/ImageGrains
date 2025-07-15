@@ -8,6 +8,7 @@ import androidx.compose.ui.graphics.toArgb
 import kotlin.math.roundToInt
 import androidx.core.graphics.set
 import androidx.core.graphics.createBitmap
+import java.util.Locale
 
 object VisualizationUtils {
 
@@ -172,7 +173,7 @@ object VisualizationUtils {
         val width = originalImage[0].size
 
         // Create side-by-side bitmap
-        val combinedBitmap = Bitmap.createBitmap(width * 2, height, Bitmap.Config.ARGB_8888)
+        val combinedBitmap = createBitmap(width * 2, height)
         val canvas = Canvas(combinedBitmap)
 
         // Draw original image on left
@@ -184,5 +185,13 @@ object VisualizationUtils {
         canvas.drawBitmap(predictionBitmap, width.toFloat(), 0f, null)
 
         return combinedBitmap
+    }
+
+    fun convertMillisecondsToTime(milliseconds: Long): String {
+        val totalSeconds = milliseconds / 1000
+        val minutes = totalSeconds / 60
+        val seconds = totalSeconds % 60
+        //Format like 20 mins 40 secs
+        return String.format(locale = Locale.getDefault(),"%02d mins %02d secs", minutes, seconds)
     }
 }

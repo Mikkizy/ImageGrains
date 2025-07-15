@@ -52,15 +52,19 @@ fun ResultsOverviewScreen(
         scaledGrainData?.let { data ->
             val histogramData = HistogramUtils.createHistogramData(
                 grainData = data,
-                binSize = 0.4,
-                xlimits = Pair(2.0, 128.0), // Default limits, can be made configurable
-                convertToMillimeters = true
+                binSize = 0.1, // Smaller bins like Python
+                xlimits = null,
+                convertToMillimeters = true,
+                useDataBasedLimits = true,
+                useAreaWeighting = true // Set to true if you want area weighting
             )
 
             histogramBitmap = HistogramUtils.createHistogramBitmap(
                 histogramData = histogramData,
                 width = 800,
-                height = 600
+                height = 600,
+                showGrainClassification = false, // 🎯 Colored background regions
+                showECDFCurves = true // 🎯 Blue and orange ECDF lines
             )
         }
     }

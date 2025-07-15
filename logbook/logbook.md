@@ -82,3 +82,23 @@ Meeting (3 July 2025)
 
         Implement base mobile app with integrated models.
 
+Meeting (14 July 2025)
+
+    Present: Miracle Ukaka (MU, student), Rebecca Bell (RB, main supervisor), Nahin Rezwan (NR, second supervisor)
+
+    Key points discussed:
+
+        Android Application Design and Tests
+
+        Features Integration
+
+    Feedback received:
+
+        The team was okay with the tests and suggested that I added D16 and D84 results. 
+
+    Work plan before next meeting:
+
+        Add feature for storage and localization.
+        
+        Run tests on Nahin's images.
+

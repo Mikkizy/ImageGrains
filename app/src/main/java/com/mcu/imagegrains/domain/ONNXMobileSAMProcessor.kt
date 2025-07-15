@@ -41,12 +41,12 @@ class ONNXMobileSAMProcessor(
             // Create session options
             val sessionOptions = OrtSession.SessionOptions().apply {
                 // Use NNAPI if available on Android
-                try {
+                /*try {
                     addNnapi()
                     println("✅ Using NNAPI for ONNX inference")
                 } catch (e: Exception) {
                     println("📱 NNAPI not available, using CPU")
-                }
+                }*/
 
                 setOptimizationLevel(OrtSession.SessionOptions.OptLevel.ALL_OPT)
                 setIntraOpNumThreads(4) // Use more threads for quantized

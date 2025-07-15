@@ -40,13 +40,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.mcu.imagegrains.R
-import com.mcu.imagegrains.presentation.PhotoDisplayScreen
 import com.mcu.imagegrains.utils.ImageUtils
 import kotlinx.coroutines.launch
 
@@ -78,7 +75,7 @@ fun HomeScreen(
                 isProcessing = true
                 try {
                     // Check if image needs compression
-                    val processedUri = ImageUtils.compressImageTo5MP(context, selectedUri)
+                    val processedUri = ImageUtils.compressImageTo4MP(context, selectedUri)
                     if (processedUri == null) {
                         Toast.makeText(context, "Image compression failed", Toast.LENGTH_SHORT).show()
                     }
@@ -220,8 +217,8 @@ fun HomeScreen(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "• Photos will be optimized to 2000×2000 pixels\n" +
-                            "• Large images are automatically compressed to 5MP\n" +
+                    text = "• Camera photos will be optimized to the nearest 4MP resolution\n" +
+                            "• Large uploaded images are automatically compressed to 4MP\n" +
                             "• Ensure good lighting for best results",
                     fontSize = 14.sp,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),

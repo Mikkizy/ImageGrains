@@ -32,7 +32,7 @@ object CameraUtils {
                 override fun onImageSaved(output: ImageCapture.OutputFileResults) {
                     onImageCaptured(true)
                     val msg = "Photo capture succeeded: ${output.savedUri}"
-                    Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Photo capture succeeded", Toast.LENGTH_SHORT).show()
                     Log.d("CameraUtils", msg)
                 }
 

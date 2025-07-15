@@ -51,6 +51,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mcu.imagegrains.R
 import com.mcu.imagegrains.presentation.SharedSegmentationViewModel
 import com.mcu.imagegrains.utils.ImageUtils
+import com.mcu.imagegrains.utils.VisualizationUtils
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -219,7 +220,7 @@ fun InstanceSegmentationScreen(
                                 )
                                 StatisticItem(
                                     label = "Processing Time",
-                                    value = "${instanceResult!!.initialResult.processingStats.processingTimeMs}ms"
+                                    value = VisualizationUtils.convertMillisecondsToTime(instanceResult!!.initialResult.processingStats.processingTimeMs)
                                 )
                                 StatisticItem(
                                     label = "Scale",

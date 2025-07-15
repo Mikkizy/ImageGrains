@@ -130,7 +130,7 @@ fun PhotoDisplayScreen(
             .padding(bottom = 16.dp)
     ) {
         TopAppBar(
-            title = { Text("Captured Photo") },
+            title = { Text("Photo Display") },
             navigationIcon = {
                 IconButton(onClick = onBackClicked) {
                     Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -263,14 +263,6 @@ fun PhotoDisplayScreen(
                     )
 
                     Spacer(modifier = Modifier.height(4.dp))
-
-                    if (originalImageSize != null) {
-                        Text(
-                            text = "Original size: ${originalImageSize!!.first} × ${originalImageSize!!.second}",
-                            fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                        )
-                    }
 
                     if (selectedBitmap != null && !selectedBitmap!!.isRecycled) {
                         Text(
