@@ -9,10 +9,13 @@ import androidx.navigation.toRoute
 import com.mcu.imagegrains.presentation.camera.CameraScreen
 import com.mcu.imagegrains.presentation.home.HomeScreen
 import com.mcu.imagegrains.presentation.instance_seg.InstanceSegmentationScreen
+import com.mcu.imagegrains.presentation.multiple_sessions.MultiSessionComparisonScreen
 import com.mcu.imagegrains.presentation.photo_display.PhotoDisplayScreen
 import com.mcu.imagegrains.presentation.result_overview.ResultsOverviewScreen
 import com.mcu.imagegrains.presentation.scale_calibration.ScaleCalibrationScreen
 import com.mcu.imagegrains.presentation.semantic_seg.SemanticSegmentationResultScreen
+import com.mcu.imagegrains.presentation.session_detail.SessionDetailScreen
+import com.mcu.imagegrains.presentation.session_list.SessionsListScreen
 import com.mcu.imagegrains.presentation.splash.SplashScreen
 
 @Composable
@@ -37,6 +40,7 @@ fun GrainSegmentationNavigation(
                     navController.navigate(PhotoDisplayScreen(photoUri))
                                          },
                 navigateToCamera = { navController.navigate(CameraScreen) },
+                navigateToSessionList = { navController.navigate(SessionsListScreen) },
                 onBackPress = { activity.finish() }
             )
         }
@@ -110,6 +114,34 @@ fun GrainSegmentationNavigation(
                     popUpTo(HomeScreen) { inclusive = true }
                 } },
                 sharedViewModel = sharedSegmentationViewModel
+            )
+        }
+
+        composable<SessionsListScreen>{
+            SessionsListScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToSessionDetail = { sessionId ->
+                    navController.navigate(SessionDetailScreen(sessionId))
+                },
+                onNavigateToMultiSessionComparison = { sessionIds ->
+                    navController.navigate(MultiSessionComparisonScreen(sessionIds.joinToString(",")))
+                }
+            )
+        }
+
+        composable<SessionDetailScreen>{ backStackEntry ->
+            val sessionId = backStackEntry.toRoute<SessionDetailScreen>().sessionId
+            SessionDetailScreen(
+                sessionId = sessionId,
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable<MultiSessionComparisonScreen>{ backStackEntry ->
+            val sessionIds = backStackEntry.toRoute<MultiSessionComparisonScreen>().sessionIds.split(",")
+            MultiSessionComparisonScreen(
+                sessionIds = sessionIds,
+                onNavigateBack = { navController.popBackStack() }
             )
         }
     }

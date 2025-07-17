@@ -22,7 +22,9 @@ import java.io.FileOutputStream
 import java.io.IOException
 import java.io.OutputStream
 import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Locale
+import java.util.UUID
 
 object ImageUtils {
     /**
@@ -122,6 +124,72 @@ object ImageUtils {
         } catch (e: IOException) {
             e.printStackTrace()
             false
+        }
+    }
+
+    /**
+     * Save image from URI to app's internal storage and return the file path
+     */
+    suspend fun saveImageToInternalStorage(
+        context: Context,
+        sourceUri: Uri,
+        sessionId: String = UUID.randomUUID().toString()
+    ): String = withContext(Dispatchers.IO) {
+        try {
+            // Create app-specific directory for grain images
+            val grainImagesDir = File(context.getExternalFilesDir(null), "Pictures")
+            if (!grainImagesDir.exists()) {
+                grainImagesDir.mkdirs()
+            }
+
+            // Create unique filename
+            val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+            val fileName = "grain_${sessionId}_${timestamp}.jpg"
+            val destinationFile = File(grainImagesDir, fileName)
+
+            // Copy image from URI to internal storage
+            context.contentResolver.openInputStream(sourceUri)?.use { inputStream ->
+                destinationFile.outputStream().use { outputStream ->
+                    inputStream.copyTo(outputStream)
+                }
+            }
+
+            destinationFile.absolutePath
+        } catch (e: Exception) {
+            throw Exception("Failed to save image: ${e.message}")
+        }
+    }
+
+    /**
+     * Load image from file path
+     */
+    fun loadImageFromPath(imagePath: String): Bitmap? {
+        return try {
+            BitmapFactory.decodeFile(imagePath)
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    /**
+     * Delete image file
+     */
+    fun deleteImage(imagePath: String): Boolean {
+        return try {
+            File(imagePath).delete()
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    /**
+     * Get image file size in bytes
+     */
+    fun getImageSize(imagePath: String): Long {
+        return try {
+            File(imagePath).length()
+        } catch (e: Exception) {
+            0L
         }
     }
 

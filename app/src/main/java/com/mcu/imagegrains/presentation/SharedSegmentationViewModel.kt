@@ -278,13 +278,40 @@ class SharedSegmentationViewModel : ViewModel() {
 
     private fun calculateGrainStatistics(grains: List<ScaledGrainProperties>): GrainStatistics {
         if (grains.isEmpty()) {
-            return GrainStatistics(0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+            return GrainStatistics(
+                0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0
+            )
         }
 
         val areas = grains.map { it.area }
         val majorAxes = grains.map { it.majorAxisLength }
         val minorAxes = grains.map { it.minorAxisLength }
         val perimeters = grains.map { it.perimeter }
+        val allSizes = (majorAxes + minorAxes)
 
         return GrainStatistics(
             count = grains.size,
@@ -302,7 +329,16 @@ class SharedSegmentationViewModel : ViewModel() {
             minorAxisMean = minorAxes.average(),
             minorAxisStd = calculateStandardDeviation(minorAxes),
             minorAxisMin = minorAxes.minOrNull() ?: 0.0,
-            minorAxisMax = minorAxes.maxOrNull() ?: 0.0
+            minorAxisMax = minorAxes.maxOrNull() ?: 0.0,
+            d16 = calculatePercentile(allSizes, 16.0),
+            d50 = calculatePercentile(allSizes, 50.0),
+            d84 = calculatePercentile(allSizes, 84.0),
+            majorAxisD16 = calculatePercentile(majorAxes, 16.0),
+            majorAxisD50 = calculatePercentile(majorAxes, 50.0),
+            majorAxisD84 = calculatePercentile(majorAxes, 84.0),
+            minorAxisD16 = calculatePercentile(minorAxes, 16.0),
+            minorAxisD50 = calculatePercentile(minorAxes, 50.0),
+            minorAxisD84 = calculatePercentile(minorAxes, 84.0)
         )
     }
 

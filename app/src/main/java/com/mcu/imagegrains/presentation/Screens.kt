@@ -25,3 +25,12 @@ object ResultOverviewScreen
 
 @Serializable
 object ScaleCalibrationScreen
+
+@Serializable
+object SessionsListScreen
+
+@Serializable
+data class SessionDetailScreen(val sessionId: String)
+
+@Serializable
+data class MultiSessionComparisonScreen(val sessionIds: String)

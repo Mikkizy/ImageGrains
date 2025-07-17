@@ -1,6 +1,7 @@
 [versions]
 agp = "8.6.0"
 commonsMath3 = "3.6.1"
+gson = "2.13.1"
 jtsCore = "1.20.0"
 kotlin = "2.2.0"
 coreKtx = "1.16.0"
@@ -14,6 +15,7 @@ luceneSpatialExtras = "8.11.2"
 navigationCompose = "2.9.1"
 onnxruntimeAndroid = "latest.release"
 opencv = "4.5.3.0"
+roomRuntime = "2.7.2"
 serialization = "1.9.0"
 camerax_version = "1.4.2"
 coil_compose = "2.4.0"
@@ -23,10 +25,17 @@ spatial4j = "0.8"
 tensorflow_lite = "2.17.0"
 tensorflow_lite_support = "0.5.0"
 timber = "5.0.1"
+roomKsp = "1.9.10-1.0.13"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "roomRuntime" }
+androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "roomRuntime" }
+androidx-room-paging = { module = "androidx.room:room-paging", version.ref = "roomRuntime" }
+androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "roomRuntime" }
+androidx-room-testing = { module = "androidx.room:room-testing", version.ref = "roomRuntime" }
 commons-math3 = { module = "org.apache.commons:commons-math3", version.ref = "commonsMath3" }
+gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 jts-core = { module = "org.locationtech.jts:jts-core", version.ref = "jtsCore" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
@@ -67,4 +76,5 @@ android-application = { id = "com.android.application", version.ref = "agp" }
 jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 jetbrains-kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "serialization" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+room-ksp = {id = "com.google.devtools.ksp", version.ref = "roomKsp" }
 

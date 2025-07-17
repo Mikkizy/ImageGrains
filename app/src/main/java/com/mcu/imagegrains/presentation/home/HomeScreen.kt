@@ -10,6 +10,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,6 +20,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -52,6 +54,7 @@ import kotlinx.coroutines.launch
 fun HomeScreen(
     navigateToPhotoDisplay: (String) -> Unit,
     navigateToCamera: () -> Unit,
+    navigateToSessionList: () -> Unit,
     onBackPress: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -111,13 +114,15 @@ fun HomeScreen(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(32.dp),
+            .padding(24.dp),
         horizontalAlignment = Alignment.Start,
     ) {
         Spacer(modifier = Modifier.height(22.dp))
         Text(
             text = "Capture Grain Image",
-            style = MaterialTheme.typography.headlineMedium,
+            style = MaterialTheme.typography.headlineMedium.copy(
+                fontSize = 24.sp
+            ),
             color = MaterialTheme.colorScheme.onBackground,
         )
         Spacer(modifier = Modifier.height(16.dp))
@@ -128,7 +133,7 @@ fun HomeScreen(
             ),
             color = MaterialTheme.colorScheme.onBackground,
         )
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(24.dp))
         Column (
             modifier = Modifier
                 .fillMaxWidth()
@@ -160,7 +165,7 @@ fun HomeScreen(
                 color = MaterialTheme.colorScheme.onPrimary
             )
         }
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(24.dp))
         Column (
             modifier = Modifier
                 .fillMaxWidth()
@@ -198,7 +203,7 @@ fun HomeScreen(
             )
         }
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(24.dp))
         // Info Card
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -217,13 +222,27 @@ fun HomeScreen(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "• Camera photos will be optimized to the nearest 4MP resolution\n" +
-                            "• Large uploaded images are automatically compressed to 3MP\n" +
-                            "• Ensure good lighting for best results",
+                    text = "• Camera photos will be optimized to the nearest 4MP resolution.\n" +
+                            "• Uploaded images are automatically compressed to 3MP.\n" +
+                            "• Ensure good lighting for best results.",
                     fontSize = 14.sp,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
                     lineHeight = 20.sp
                 )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+        Box(
+            modifier = Modifier.fillMaxWidth(),
+            contentAlignment = Alignment.Center
+        ) {
+            Button(
+                onClick = {
+                    navigateToSessionList()
+                }
+            ) {
+                Text(text = "View All Segmentations")
             }
         }
     }
@@ -232,5 +251,5 @@ fun HomeScreen(
 @Preview
 @Composable
 private fun HomeScreenPreview() {
-    HomeScreen({},{}, {})
+    HomeScreen({},{}, {}, {})
 }

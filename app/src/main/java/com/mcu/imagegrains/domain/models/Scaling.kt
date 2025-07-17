@@ -44,5 +44,14 @@ data class GrainStatistics(
     val minorAxisMean: Double,
     val minorAxisStd: Double,
     val minorAxisMin: Double,
-    val minorAxisMax: Double
+    val minorAxisMax: Double,
+    val d16: Double,  // 16th percentile
+    val d50: Double,  // 50th percentile (median)
+    val d84: Double,  // 84th percentile
+    val majorAxisD16: Double,  // 16th percentile
+    val majorAxisD50: Double,  // 50th percentile (median)
+    val majorAxisD84: Double,   // 84th percentile
+    val minorAxisD16: Double,  // 16th percentile
+    val minorAxisD50: Double,  // 50th percentile (median)
+    val minorAxisD84: Double   // 84th percentile
 )

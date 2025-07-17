@@ -3,11 +3,17 @@ plugins {
     alias(libs.plugins.jetbrains.kotlin.android)
     alias(libs.plugins.jetbrains.kotlin.serialization)
     alias(libs.plugins.compose.compiler)
+    id("com.google.devtools.ksp")
+    id("androidx.room")
 }
 
 android {
     namespace = "com.mcu.imagegrains"
     compileSdk = 35
+
+    room {
+        schemaDirectory("$projectDir/schemas")
+    }
 
     defaultConfig {
         applicationId = "com.mcu.imagegrains"
@@ -79,6 +85,16 @@ dependencies {
 
     // For scientific computing operations
     implementation(libs.commons.math3)
+
+    //Room
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
+    implementation(libs.androidx.room.paging)
+    testImplementation(libs.androidx.room.testing)
+
+    // Gson for JSON serialization
+    implementation(libs.gson)
 
     //implementation(libs.opencv)
 

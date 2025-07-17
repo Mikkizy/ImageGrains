@@ -1,12 +1,23 @@
 package com.mcu.imagegrains
 
 import android.app.Application
+import com.mcu.imagegrains.data.local.GrainDatabase
+import com.mcu.imagegrains.domain.repository.GrainRepository
+import kotlin.getValue
 
 class GrainSegmentationApplication : Application() {
 
+    val database by lazy { GrainDatabase.getDatabase(this) }
+    val repository by lazy { GrainRepository(database.grainSessionDao()) }
+
+    companion object {
+        lateinit var instance: GrainSegmentationApplication
+            private set
+    }
+
     override fun onCreate() {
         super.onCreate()
-
+        instance = this
         // Configure memory management
         configureMemorySettings()
     }
