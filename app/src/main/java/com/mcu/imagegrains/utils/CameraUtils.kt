@@ -55,8 +55,8 @@ object CameraUtils {
                     setResolutionStrategy(
                         ResolutionStrategy(
                             Size(
-                                2000,
-                                2000
+                                1000,
+                                1000
                             ), ResolutionStrategy.FALLBACK_RULE_CLOSEST_LOWER_THEN_HIGHER
                         )
                     )

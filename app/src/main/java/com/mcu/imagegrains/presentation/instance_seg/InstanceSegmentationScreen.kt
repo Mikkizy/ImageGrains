@@ -1,5 +1,7 @@
 package com.mcu.imagegrains.presentation.instance_seg
 
+import android.app.Activity
+import android.view.WindowManager
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -34,6 +36,7 @@ import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -70,6 +73,22 @@ fun InstanceSegmentationScreen(
     val error by sharedViewModel.error.collectAsStateWithLifecycle()
     val instanceResult by sharedViewModel.instanceResult.collectAsStateWithLifecycle()
     val scaleCalibration by sharedViewModel.scaleCalibration.collectAsStateWithLifecycle()
+
+    // Keep screen awake while processing
+    DisposableEffect(isProcessing) {
+        val window = (context as Activity).window
+        if (isProcessing) {
+            window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            println("🔋 Screen kept awake for segmentation")
+        } else {
+            window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            println("🔋 Screen wake lock released")
+        }
+
+        onDispose {
+            window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
+    }
 
     LaunchedEffect(Unit) {
         if (instanceResult == null && !isProcessing) {

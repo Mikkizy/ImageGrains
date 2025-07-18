@@ -1,5 +1,6 @@
 package com.mcu.imagegrains.presentation.semantic_seg
 
+import android.app.Activity
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
@@ -8,6 +9,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
+import android.view.WindowManager
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -39,6 +41,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -81,6 +84,22 @@ fun SemanticSegmentationResultScreen(
     val error by sharedViewModel.error.collectAsStateWithLifecycle()
     val semanticResult by sharedViewModel.semanticResult.collectAsStateWithLifecycle()
     val labelingResult by sharedViewModel.labelingResult.collectAsStateWithLifecycle()
+
+    // Keep screen awake while processing
+    DisposableEffect(isProcessing) {
+        val window = (context as Activity).window
+        if (isProcessing) {
+            window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            println("🔋 Screen kept awake for segmentation")
+        } else {
+            window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            println("🔋 Screen wake lock released")
+        }
+
+        onDispose {
+            window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
+    }
 
     // Start processing when screen loads
     LaunchedEffect(Unit) {
