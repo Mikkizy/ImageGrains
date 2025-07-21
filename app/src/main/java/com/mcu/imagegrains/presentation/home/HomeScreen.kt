@@ -222,7 +222,7 @@ fun HomeScreen(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "• Camera photos will be optimized to the nearest 4MP resolution.\n" +
+                    text = "• Camera photos will be optimized to the nearest 1MP resolution.\n" +
                             "• Uploaded images are automatically compressed to 3MP.\n" +
                             "• Ensure good lighting for best results.",
                     fontSize = 14.sp,
