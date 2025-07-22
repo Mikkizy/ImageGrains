@@ -7,9 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mcu.imagegrains.domain.CompleteSegmentationResult
 import com.mcu.imagegrains.domain.GrainLabelingProcessor
-import com.mcu.imagegrains.domain.InstanceSegmentationProcessor
 import com.mcu.imagegrains.domain.OptimizedInstanceSegmentationProcessor
-import com.mcu.imagegrains.domain.OptimizedProcessingStats
 import com.mcu.imagegrains.domain.SemanticSegmentationProcessor
 import com.mcu.imagegrains.domain.SemanticSegmentationResult
 import com.mcu.imagegrains.domain.models.GrainProperties
@@ -166,7 +164,7 @@ class SharedSegmentationViewModel : ViewModel() {
         // Let the caller handle its lifecycle
     }
 
-    fun performSemanticSegmentation(context: Context) {
+    fun performSemanticSegmentation() {
         val uri = _originalImageUri.value ?: return
 
         viewModelScope.launch {
@@ -310,7 +308,7 @@ class SharedSegmentationViewModel : ViewModel() {
         val areas = grains.map { it.area }
         val majorAxes = grains.map { it.majorAxisLength }
         val minorAxes = grains.map { it.minorAxisLength }
-        val perimeters = grains.map { it.perimeter }
+        //grains.map { it.perimeter }
         val allSizes = (majorAxes + minorAxes)
 
         return GrainStatistics(

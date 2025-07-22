@@ -1,14 +1,6 @@
 package com.mcu.imagegrains.presentation.semantic_seg
 
 import android.app.Activity
-import android.content.ContentValues
-import android.content.Context
-import android.content.Intent
-import android.graphics.Bitmap
-import android.net.Uri
-import android.os.Build
-import android.os.Environment
-import android.provider.MediaStore
 import android.view.WindowManager
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
@@ -43,7 +35,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -55,18 +46,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mcu.imagegrains.presentation.SharedSegmentationViewModel
 import com.mcu.imagegrains.utils.ImageUtils
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.io.File
-import java.io.FileOutputStream
-import java.io.OutputStream
-import java.text.SimpleDateFormat
-import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -104,7 +87,7 @@ fun SemanticSegmentationResultScreen(
     // Start processing when screen loads
     LaunchedEffect(Unit) {
         if (semanticResult == null && !isProcessing) {
-            sharedViewModel.performSemanticSegmentation(context)
+            sharedViewModel.performSemanticSegmentation()
         }
     }
 
@@ -181,7 +164,7 @@ fun SemanticSegmentationResultScreen(
                     Button(
                         onClick = {
                             sharedViewModel.clearError()
-                            sharedViewModel.performSemanticSegmentation(context)
+                            sharedViewModel.performSemanticSegmentation()
                         }
                     ) {
                         Text("Retry")
