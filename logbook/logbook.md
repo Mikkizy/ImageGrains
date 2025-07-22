@@ -102,3 +102,23 @@ Meeting (14 July 2025)
         
         Run tests on Nahin's images.
 
+Meeting (21 July 2025)
+
+    Present: Miracle Ukaka (MU, student), Rebecca Bell (RB, main supervisor), Nahin Rezwan (NR, second supervisor)
+
+    Key points discussed:
+
+        New Features Added
+
+        Field Trip for Testing
+
+    Feedback received:
+
+        The team was okay with the new save session feature.
+
+    Work plan before next meeting:
+
+        Go to field trip to test camera functionality.
+        
+        Review some more papers.
+
