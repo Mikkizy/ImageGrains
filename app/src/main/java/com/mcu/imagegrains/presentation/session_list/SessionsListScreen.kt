@@ -52,6 +52,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.mcu.imagegrains.R
 import com.mcu.imagegrains.data.local.GrainDatabase
 import com.mcu.imagegrains.data.local.GrainSession
@@ -81,6 +82,7 @@ fun SessionsListScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
             .padding(16.dp)
             .systemBarsPadding()
     ) {
@@ -97,14 +99,21 @@ fun SessionsListScreen(
                         isSelectionMode = false
                     }
                 ) {
-                    Icon(Icons.Default.Close, contentDescription = "Cancel Selection")
+                    Icon(
+                        Icons.Default.Close,
+                        contentDescription = "Cancel Selection",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
 
                 Text(
                     text = "${selectedSessions.size} selected",
-                    style = MaterialTheme.typography.headlineMedium,
+                    style = MaterialTheme.typography.headlineMedium.copy(
+                        fontSize = 24.sp
+                    ),
                     modifier = Modifier.weight(1f),
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
                 Row {
@@ -114,26 +123,41 @@ fun SessionsListScreen(
                                 onNavigateToMultiSessionComparison(selectedSessions.toList())
                             }
                         ) {
-                            Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = "Compare")
+                            Icon(
+                                Icons.AutoMirrored.Filled.ExitToApp,
+                                contentDescription = "Compare",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
                     }
 
                     IconButton(
                         onClick = { showDeleteDialog = true }
                     ) {
-                        Icon(Icons.Default.Delete, contentDescription = "Delete")
+                        Icon(
+                            Icons.Default.Delete,
+                            contentDescription = "Delete",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                 }
             } else {
                 IconButton(onClick = onNavigateBack) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    Icon(
+                        Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Back",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
 
                 Text(
                     text = "Saved Sessions",
-                    style = MaterialTheme.typography.headlineMedium,
+                    style = MaterialTheme.typography.headlineMedium.copy(
+                        fontSize = 24.sp
+                    ),
                     modifier = Modifier.weight(0.7f),
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
                 // Select All button (only show if there are sessions)

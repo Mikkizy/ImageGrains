@@ -100,6 +100,7 @@ fun SessionDetailScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
             .systemBarsPadding()
             .padding(16.dp)
     ) {

@@ -2,6 +2,7 @@ package com.mcu.imagegrains.presentation.photo_display
 
 import android.graphics.Bitmap
 import android.net.Uri
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -126,6 +127,7 @@ fun PhotoDisplayScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
             .windowInsetsPadding(WindowInsets.systemBars)
             .padding(bottom = 16.dp)
     ) {
@@ -169,6 +171,7 @@ fun PhotoDisplayScreen(
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .background(MaterialTheme.colorScheme.errorContainer)
                             .padding(16.dp),
                         colors = CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.errorContainer
@@ -290,6 +293,7 @@ fun PhotoDisplayScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                //.background(MaterialTheme.colorScheme.surfaceVariant)
                 .padding(16.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {

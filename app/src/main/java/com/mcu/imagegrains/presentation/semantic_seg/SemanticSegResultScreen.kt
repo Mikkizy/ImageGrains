@@ -3,6 +3,7 @@ package com.mcu.imagegrains.presentation.semantic_seg
 import android.app.Activity
 import android.view.WindowManager
 import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -94,6 +95,7 @@ fun SemanticSegmentationResultScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
             .windowInsetsPadding(WindowInsets.systemBars)
     ) {
         TopAppBar(
@@ -134,7 +136,8 @@ fun SemanticSegmentationResultScreen(
                     Text(
                         text = "Processing semantic segmentation...",
                         fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                     )
 
                     Text(
