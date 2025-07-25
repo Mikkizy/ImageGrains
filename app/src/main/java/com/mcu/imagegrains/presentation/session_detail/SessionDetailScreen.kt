@@ -1,6 +1,7 @@
 package com.mcu.imagegrains.presentation.session_detail
 
 import android.graphics.Bitmap
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -32,6 +33,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,11 +43,16 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.mcu.imagegrains.data.local.GrainDatabase
 import com.mcu.imagegrains.data.local.GrainSession
 import com.mcu.imagegrains.domain.models.GrainStatistics
 import com.mcu.imagegrains.domain.models.ScaleCalibration
+import com.mcu.imagegrains.domain.models.ScaledGrainData
 import com.mcu.imagegrains.domain.repository.GrainRepository
+import com.mcu.imagegrains.presentation.result_overview.ExportActionsCard
+import com.mcu.imagegrains.presentation.result_overview.ExportDialog
+import com.mcu.imagegrains.utils.CSVExportUtils
 import com.mcu.imagegrains.utils.GrainHistogram
 import com.mcu.imagegrains.utils.GrainHistogramData
 import com.mcu.imagegrains.utils.ImageUtils
@@ -68,10 +75,12 @@ fun SessionDetailScreen(
     var session by remember { mutableStateOf<GrainSession?>(null) }
     var statistics by remember { mutableStateOf<GrainStatistics?>(null) }
     var scaleCalibration by remember { mutableStateOf<ScaleCalibration?>(null) }
+    var scaledGrainData by remember { mutableStateOf<ScaledGrainData?>(null) }
     var histogramData by remember { mutableStateOf<GrainHistogramData?>(null) }
     var histogramBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var originalImageBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var showExportDialog by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(sessionId) {
         try {
@@ -79,6 +88,7 @@ fun SessionDetailScreen(
             session?.let { s ->
                 statistics = repository.parseStatistics(s)
                 scaleCalibration = repository.parseScaleCalibration(s)
+                scaledGrainData = repository.parseGrainData(s)
                 histogramData = repository.parseHistogramData(s)
                 originalImageBitmap = ImageUtils.loadImageFromPath(s.imagePath)
 
@@ -111,20 +121,31 @@ fun SessionDetailScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = onNavigateBack) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                Icon(
+                    Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    tint = MaterialTheme.colorScheme.onBackground
+                )
             }
 
             Text(
                 text = session?.name ?: "Loading...",
-                style = MaterialTheme.typography.headlineMedium,
+                style = MaterialTheme.typography.headlineMedium.copy(
+                    fontSize = 20.sp
+                ),
                 modifier = Modifier.weight(1f),
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onBackground
             )
 
             IconButton(
                 onClick = { showDeleteDialog = true }
             ) {
-                Icon(Icons.Default.Delete, contentDescription = "Delete Session")
+                Icon(
+                    Icons.Default.Delete,
+                    contentDescription = "Delete Session",
+                    tint = MaterialTheme.colorScheme.onBackground
+                )
             }
         }
 
@@ -265,6 +286,20 @@ fun SessionDetailScreen(
                         }
                     }
                 }
+
+                item {
+                    scaledGrainData?.let { data ->
+                        ExportActionsCard(
+                            data = data,
+                            onExportCSV = { showExportDialog = true },
+                            onShareCSV = {
+                                scope.launch {
+                                    CSVExportUtils.shareCSVFile(context, data)
+                                }
+                            }
+                        )
+                    }
+                }
             }
         }
     }
@@ -298,6 +333,24 @@ fun SessionDetailScreen(
             dismissButton = {
                 TextButton(onClick = { showDeleteDialog = false }) {
                     Text("Cancel")
+                }
+            }
+        )
+    }
+
+    // Export Dialog
+    if (showExportDialog) {
+        ExportDialog(
+            onDismiss = { showExportDialog = false },
+            onConfirm = { fileName ->
+                scope.launch {
+                    scaledGrainData?.let { data ->
+                        val fileUri = CSVExportUtils.exportGrainDataToCSV(context, data, fileName)
+                        if (fileUri != null) {
+                            Toast.makeText(context, "File saved as $fileName", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                    showExportDialog = false
                 }
             }
         )

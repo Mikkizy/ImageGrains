@@ -596,7 +596,7 @@ private fun ScaleInformationCard(data: ScaledGrainData) {
 }
 
 @Composable
-private fun ExportActionsCard(
+fun ExportActionsCard(
     data: ScaledGrainData,
     onExportCSV: () -> Unit,
     onShareCSV: () -> Unit
@@ -673,7 +673,7 @@ private fun SummaryItem(
 }
 
 @Composable
-private fun ExportDialog(
+fun ExportDialog(
     onDismiss: () -> Unit,
     onConfirm: (String) -> Unit
 ) {
