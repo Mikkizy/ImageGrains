@@ -140,3 +140,25 @@ Meeting (28 July 2025)
 
         Add Help screen for users to get image capturing tips.
 
+Meeting (04 August 2025)
+
+    Present: Miracle Ukaka (MU, student), Rebecca Bell (RB, main supervisor), Nahin Rezwan (NR, second supervisor)
+
+    Key points discussed:
+
+        Report Analysis Progress
+
+        Mobile Device Testing
+
+    Feedback received:
+
+        The team suggested that 7 sites for testing was okay.
+        
+        The team also proposed the comparison of converted models against original models
+
+    Work plan before next meeting:
+
+        Continue working on report.
+
+        Carry out more tests on the mobile application.
+

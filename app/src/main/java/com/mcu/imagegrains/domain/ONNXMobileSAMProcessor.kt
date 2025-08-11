@@ -45,7 +45,7 @@ class ONNXMobileSAMProcessor(
                     addNnapi()
                     println("✅ Using NNAPI for ONNX inference")
                 } catch (e: Exception) {
-                    println("📱 NNAPI not available, using CPU")
+                    println("NNAPI not available, using CPU")
                 }*/
 
                 setOptimizationLevel(OrtSession.SessionOptions.OptLevel.ALL_OPT)
