@@ -2,7 +2,6 @@ package com.mcu.imagegrains.utils
 
 import org.locationtech.jts.geom.*
 import org.locationtech.jts.geom.util.GeometryFixer
-import org.locationtech.jts.operation.buffer.BufferOp
 import kotlin.math.*
 
 object GrainCollectionUtils {
@@ -164,8 +163,7 @@ object GrainCollectionUtils {
      * Find contours with memory optimization
      */
     fun findContours(
-        mask: Array<BooleanArray>,
-        level: Float = 0.5f
+        mask: Array<BooleanArray>
     ): List<Pair<FloatArray, FloatArray>> {
 
         val contours = mutableListOf<Pair<FloatArray, FloatArray>>()
@@ -225,7 +223,7 @@ object GrainCollectionUtils {
                                     }
                                 }
 
-                            } catch (e: OutOfMemoryError) {
+                            } catch (_: OutOfMemoryError) {
                                 println("❌ OOM during contour tracing at ($i, $j)")
                                 System.gc()
                                 return contours
@@ -335,7 +333,7 @@ object GrainCollectionUtils {
         imageHeight: Int
     ): Pair<Array<IntArray>, Array<IntArray>> {
 
-        println("🔄 Creating labeled image ${imageWidth}x${imageHeight} for ${allGrains.size} grains...")
+        println("Creating labeled image ${imageWidth}x${imageHeight} for ${allGrains.size} grains...")
 
         // Check memory before allocating large arrays
         val runtime = Runtime.getRuntime()
@@ -346,15 +344,15 @@ object GrainCollectionUtils {
         val arraySize = imageWidth.toLong() * imageHeight.toLong() * 4L // 4 bytes per int
         val requiredMemory = arraySize * 2L // Two arrays
 
-        println("📊 Memory: ${memoryUsagePercent}%, Required: ${requiredMemory / 1024 / 1024}MB")
+        println("Memory: ${memoryUsagePercent}%, Required: ${requiredMemory / 1024 / 1024}MB")
 
         if (memoryUsagePercent > 70) {
             println("⚠️ High memory usage, forcing GC before array allocation...")
             System.gc()
         }
 
-        val rasterized = Array(imageHeight) { IntArray(imageWidth) { 0 } }
-        val maskAll = Array(imageHeight) { IntArray(imageWidth) { 0 } }
+        val rasterized = Array(imageHeight) { IntArray(imageWidth) }
+        val maskAll = Array(imageHeight) { IntArray(imageWidth) }
 
         try {
             // Process grains in batches to prevent memory spikes
@@ -374,11 +372,11 @@ object GrainCollectionUtils {
                             rasterizePolygonOptimized(boundary, maskAll, 2, imageWidth, imageHeight)
                         }
 
-                    } catch (e: OutOfMemoryError) {
+                    } catch (_: OutOfMemoryError) {
                         println("❌ OOM processing grain $globalIndex, skipping...")
                         System.gc()
                     } catch (e: Exception) {
-                        println("⚠️ Error processing grain $globalIndex: ${e.message}")
+                        println("Error processing grain $globalIndex: ${e.message}")
                     }
                 }
 

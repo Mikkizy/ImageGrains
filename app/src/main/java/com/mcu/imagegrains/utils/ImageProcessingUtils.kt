@@ -6,25 +6,12 @@ import android.graphics.BitmapFactory
 import android.net.Uri
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.io.InputStream
 import kotlin.math.*
+import androidx.core.graphics.get
+import androidx.core.graphics.createBitmap
+import androidx.core.graphics.set
 
 object ImageProcessingUtils {
-
-    /**
-     * Load bitmap from URI with proper error handling
-     */
-    fun loadBitmapFromUri(context: Context, uri: Uri): Bitmap? {
-        return try {
-            val inputStream: InputStream? = context.contentResolver.openInputStream(uri)
-            inputStream?.use { stream ->
-                BitmapFactory.decodeStream(stream)
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
-        }
-    }
 
     /**
      * Load image from URI as 3D float array for TFLite processing
@@ -62,7 +49,7 @@ object ImageProcessingUtils {
             ColorMode.RGB -> {
                 Array(height) { h ->
                     Array(width) { w ->
-                        val pixel = bitmap.getPixel(w, h)
+                        val pixel = bitmap[w, h]
                         floatArrayOf(
                             ((pixel shr 16) and 0xFF) / 255f, // Red
                             ((pixel shr 8) and 0xFF) / 255f,  // Green
@@ -74,7 +61,7 @@ object ImageProcessingUtils {
             ColorMode.GRAYSCALE -> {
                 Array(height) { h ->
                     Array(width) { w ->
-                        val pixel = bitmap.getPixel(w, h)
+                        val pixel = bitmap[w, h]
                         val gray = (0.299 * ((pixel shr 16) and 0xFF) +
                                 0.587 * ((pixel shr 8) and 0xFF) +
                                 0.114 * (pixel and 0xFF)) / 255f
@@ -93,7 +80,7 @@ object ImageProcessingUtils {
         val width = imageArray[0].size
         val channels = imageArray[0][0].size
 
-        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val bitmap = createBitmap(width, height)
 
         for (h in 0 until height) {
             for (w in 0 until width) {
@@ -110,26 +97,11 @@ object ImageProcessingUtils {
                     }
                     else -> 0xFF000000.toInt() // Black for invalid channels
                 }
-                bitmap.setPixel(w, h, pixel)
+                bitmap[w, h] = pixel
             }
         }
 
         return bitmap
-    }
-
-    /**
-     * Generate Hanning window for image blending
-     */
-    fun generateHanningWindow(size: Int): Array<FloatArray> {
-        val window1D = FloatArray(size) { i ->
-            (0.5 * (1 - cos(2 * PI * i / (size - 1)))).toFloat()
-        }
-
-        return Array(size) { i ->
-            FloatArray(size) { j ->
-                window1D[i] * window1D[j]
-            }
-        }
     }
 
     /**

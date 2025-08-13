@@ -224,7 +224,7 @@ class SharedSegmentationViewModel : ViewModel() {
                     predictionArray = semanticResult.predictionArray,
                     labelingResult = labelingResult,
                     minArea = 400
-                ) { progress -> _progress.value = progress }
+                )
 
                 _instanceResult.value = result
 

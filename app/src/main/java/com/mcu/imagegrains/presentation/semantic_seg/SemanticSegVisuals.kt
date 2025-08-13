@@ -131,7 +131,7 @@ fun SemanticSegmentationVisualization(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    VisualizationMode.values().forEach { mode ->
+                    VisualizationMode.entries.forEach { mode ->
                         FilterChip(
                             onClick = { visualizationMode = mode },
                             label = {

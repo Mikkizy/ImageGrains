@@ -133,8 +133,7 @@ object EnhancedVisualizationUtils {
     fun createCompleteGrainVisualization(
         originalBitmap: Bitmap,
         allGrains: List<Polygon>,
-        labels: Array<IntArray>,
-        maskAll: Array<IntArray>
+        labels: Array<IntArray>
     ): Bitmap {
 
         // Step 1: Create colorful grains visualization

@@ -11,6 +11,8 @@ import kotlin.math.log2
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
+import androidx.core.graphics.withRotation
+import java.util.Locale
 
 data class GrainHistogramData(
     val actualXLimits: Pair<Double,Double>,
@@ -181,13 +183,13 @@ object GrainHistogram {
         val bgClass    = Paint().apply { style = Paint.Style.FILL; color = 0x30CCCCCC.toInt() }
 
         // φ‐range
-        val φ_hi = data.phiMax
-        val φ_lo = data.phiMin
-        val φ_span = φ_hi - φ_lo
+        val phi_high = data.phiMax
+        val phi_low = data.phiMin
+        val phi_span = phi_high - phi_low
 
         // φ→x (reversed so φ_hi is left, φ_lo is right)
         fun mapX(phi: Double) =
-            pad + ((φ_hi - phi)/φ_span * plotW).toFloat()
+            pad + ((phi_high - phi)/phi_span * plotW).toFloat()
 
         // 1) draw grain‐class backgrounds
         if (showGrainClassification) {
@@ -198,10 +200,14 @@ object GrainHistogram {
                 canvas.drawLine(x0, pad, x0, height - pad, axisPaint)
                 // label
                 val labelY = height - pad + 40f
-                canvas.save()
-                canvas.rotate(-90f, (x0+x1)/2, labelY)
-                canvas.drawText(cls.name, (x0+x1)/2 - smallText.measureText(cls.name)/2, labelY, smallText)
-                canvas.restore()
+                canvas.withRotation(-90f, (x0 + x1) / 2, labelY) {
+                    drawText(
+                        cls.name,
+                        (x0 + x1) / 2 - smallText.measureText(cls.name) / 2,
+                        labelY,
+                        smallText
+                    )
+                }
             }
         }
 
@@ -266,18 +272,18 @@ object GrainHistogram {
             val p = i / 5.0f
             val y = height - pad - (p * plotH)
             canvas.drawLine(width - pad, y, width - pad + 10f, y, axisPaint)
-            canvas.drawText(String.format("%.1f", p), width - pad + 20f, y + 8f, smallText)
+            canvas.drawText(String.format(Locale.getDefault(),"%.1f", p), width - pad + 20f, y + 8f, smallText)
         }
 
         // 7) bottom‐axis φ‐scale (top of plot)
         for (cls in data.grainClasses) {
             // draw tick at each class boundary
-            listOf(cls.minPhi, cls.maxPhi).distinct().forEach { φ ->
-                val x = mapX(φ)
+            listOf(cls.minPhi, cls.maxPhi).distinct().forEach { phi->
+                val x = mapX(phi)
                 canvas.drawLine(x, pad, x, pad - 10f, axisPaint)
                 canvas.drawText(
-                    "%.0f".format(φ),
-                    x - smallText.measureText("%.0f".format(φ))/2,
+                    "%.0f".format(phi),
+                    x - smallText.measureText("%.0f".format(phi))/2,
                     pad - 15f,
                     smallText
                 )
@@ -288,9 +294,9 @@ object GrainHistogram {
 
         // 8) bottom‐axis grain‐size labels (mm), 6 evenly spaced in φ→mm
         for (i in 0..6) {
-            val φ = data.phiMax - i*(data.phiMax - data.phiMin)/6
-            val mm = 2.0.pow(-φ)
-            val x  = mapX(φ)
+            val phi = data.phiMax - i*(data.phiMax - data.phiMin)/6
+            val mm = 2.0.pow(-phi)
+            val x  = mapX(phi)
             val lbl = if (mm<10) "%.1f".format(mm) else "%.0f".format(mm)
             canvas.drawText(lbl, x - smallText.measureText(lbl)/2, height - pad + 30f, smallText)
         }

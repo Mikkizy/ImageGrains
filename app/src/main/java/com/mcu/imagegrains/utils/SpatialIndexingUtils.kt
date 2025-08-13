@@ -3,7 +3,6 @@ package com.mcu.imagegrains.utils
 import org.locationtech.jts.geom.Polygon
 import org.locationtech.jts.geom.Envelope
 import org.locationtech.jts.index.strtree.STRtree
-import kotlin.math.*
 
 /**
  * Simple spatial indexing using JTS STRtree instead of Spatial4j
@@ -154,107 +153,5 @@ object SpatialIndexingUtils {
         }
     }
 
-    /**
-     * Alternative simple implementation without spatial indexing for small datasets
-     */
-    fun findOverlappingPolygonsSimple(
-        polygons: List<Polygon>,
-        overlapThreshold: Double = 0.1
-    ): List<Set<Int>> {
-
-        if (polygons.size < 2) return emptyList()
-
-        println("🔄 Finding overlaps using simple O(n²) method for ${polygons.size} polygons...")
-
-        val visited = BooleanArray(polygons.size)
-        val overlappingGroups = mutableListOf<Set<Int>>()
-
-        for (i in polygons.indices) {
-            if (!visited[i]) {
-                val group = mutableSetOf<Int>()
-                val toCheck = ArrayDeque<Int>()
-                toCheck.add(i)
-
-                while (toCheck.isNotEmpty()) {
-                    val current = toCheck.removeFirst()
-                    if (visited[current]) continue
-
-                    visited[current] = true
-                    group.add(current)
-
-                    // Check against all other polygons
-                    for (j in polygons.indices) {
-                        if (!visited[j] && j != current) {
-                            try {
-                                if (checkOverlap(polygons[current], polygons[j], overlapThreshold)) {
-                                    toCheck.add(j)
-                                }
-                            } catch (e: Exception) {
-                                println("⚠️ Error checking overlap between $current and $j: ${e.message}")
-                            }
-                        }
-                    }
-                }
-
-                if (group.size > 1) {
-                    overlappingGroups.add(group)
-                }
-            }
-        }
-
-        println("✅ Found ${overlappingGroups.size} overlapping groups")
-        return overlappingGroups
-    }
 }
 
-/**
- * Fallback spatial indexing using simple grid
- */
-class SimpleGridIndex(
-    private val bounds: Envelope,
-    private val gridSize: Int = 100
-) {
-    private val cellWidth = bounds.width / gridSize
-    private val cellHeight = bounds.height / gridSize
-    private val grid = Array(gridSize) { Array(gridSize) { mutableListOf<Int>() } }
-
-    fun insert(polygon: Polygon, index: Int) {
-        try {
-            val envelope = polygon.envelopeInternal
-
-            val minCellX = ((envelope.minX - bounds.minX) / cellWidth).toInt().coerceIn(0, gridSize - 1)
-            val maxCellX = ((envelope.maxX - bounds.minX) / cellWidth).toInt().coerceIn(0, gridSize - 1)
-            val minCellY = ((envelope.minY - bounds.minY) / cellHeight).toInt().coerceIn(0, gridSize - 1)
-            val maxCellY = ((envelope.maxY - bounds.minY) / cellHeight).toInt().coerceIn(0, gridSize - 1)
-
-            for (x in minCellX..maxCellX) {
-                for (y in minCellY..maxCellY) {
-                    grid[x][y].add(index)
-                }
-            }
-        } catch (e: Exception) {
-            println("⚠️ Error inserting into grid: ${e.message}")
-        }
-    }
-
-    fun query(envelope: Envelope): List<Int> {
-        val result = mutableSetOf<Int>()
-
-        try {
-            val minCellX = ((envelope.minX - bounds.minX) / cellWidth).toInt().coerceIn(0, gridSize - 1)
-            val maxCellX = ((envelope.maxX - bounds.minX) / cellWidth).toInt().coerceIn(0, gridSize - 1)
-            val minCellY = ((envelope.minY - bounds.minY) / cellHeight).toInt().coerceIn(0, gridSize - 1)
-            val maxCellY = ((envelope.maxY - bounds.minY) / cellHeight).toInt().coerceIn(0, gridSize - 1)
-
-            for (x in minCellX..maxCellX) {
-                for (y in minCellY..maxCellY) {
-                    result.addAll(grid[x][y])
-                }
-            }
-        } catch (e: Exception) {
-            println("⚠️ Error querying grid: ${e.message}")
-        }
-
-        return result.toList()
-    }
-}

@@ -8,6 +8,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.nio.FloatBuffer
 import kotlin.math.*
+import androidx.core.graphics.scale
+import androidx.core.graphics.createBitmap
+import androidx.core.graphics.get
 
 class ONNXMobileSAMProcessor(
     private val context: Context
@@ -43,7 +46,7 @@ class ONNXMobileSAMProcessor(
                 // Use NNAPI if available on Android
                 /*try {
                     addNnapi()
-                    println("✅ Using NNAPI for ONNX inference")
+                    println("Using NNAPI for ONNX inference")
                 } catch (e: Exception) {
                     println("NNAPI not available, using CPU")
                 }*/
@@ -61,7 +64,7 @@ class ONNXMobileSAMProcessor(
             encoderSession = ortEnvironment!!.createSession(encoderBytes, sessionOptions)
             predictorSession = ortEnvironment!!.createSession(predictorBytes, sessionOptions)
 
-            println("✅ ONNX MobileSAM models loaded successfully")
+            println("ONNX MobileSAM models loaded successfully")
             println("Encoder inputs: ${encoderSession!!.inputNames}")
             println("Predictor inputs: ${predictorSession!!.inputNames}")
 
@@ -72,14 +75,8 @@ class ONNXMobileSAMProcessor(
             true
         } catch (e: Exception) {
             e.printStackTrace()
-            println("❌ Failed to initialize ONNX models: ${e.message}")
+            println("Failed to initialize ONNX models: ${e.message}")
             false
-        }
-    }
-
-    private fun loadModelFromAssets(modelPath: String): ByteArray {
-        return context.assets.open(modelPath).use { inputStream ->
-            inputStream.readBytes()
         }
     }
 
@@ -103,7 +100,7 @@ class ONNXMobileSAMProcessor(
             transformedCoords[i + 1] = coords[i + 1] * scale // y coordinate
         }
 
-        println("Coordinate transform: ${originalSize} -> scale=${scale} -> transformed")
+        println("Coordinate transform: $originalSize -> scale=${scale} -> transformed")
         return transformedCoords
     }
 
@@ -122,10 +119,10 @@ class ONNXMobileSAMProcessor(
         println("SAM preprocessing: ${oldW}x${oldH} -> scale=${scale} -> ${newW}x${newH}")
 
         // Resize maintaining aspect ratio
-        val resizedBitmap = Bitmap.createScaledBitmap(bitmap, newW, newH, true)
+        val resizedBitmap = bitmap.scale(newW, newH)
 
         // Create 1024x1024 padded image
-        val paddedBitmap = Bitmap.createBitmap(targetLength, targetLength, Bitmap.Config.ARGB_8888)
+        val paddedBitmap = createBitmap(targetLength, targetLength)
         val canvas = android.graphics.Canvas(paddedBitmap)
         canvas.drawBitmap(resizedBitmap, 0f, 0f, null)
 
@@ -136,7 +133,7 @@ class ONNXMobileSAMProcessor(
         for (c in 0 until 3) {
             for (h in 0 until targetLength) {
                 for (w in 0 until targetLength) {
-                    val pixel = paddedBitmap.getPixel(w, h)
+                    val pixel = paddedBitmap[w, h]
                     val channelValue = when (c) {
                         0 -> ((pixel shr 16) and 0xFF) / 255f // Red
                         1 -> ((pixel shr 8) and 0xFF) / 255f  // Green
@@ -229,14 +226,14 @@ class ONNXMobileSAMProcessor(
                 cachedImageHash = imageHash
                 originalImageShape = originalShape
 
-                println("✅ Generated embeddings shape: ${embeddings.info.shape.contentToString()}")
+                println("Generated embeddings shape: ${embeddings.info.shape.contentToString()}")
 
                 EmbeddingResult(embeddings, originalShape)
             }
 
         } catch (e: Exception) {
             e.printStackTrace()
-            println("❌ Failed to get embeddings: ${e.message}")
+            println("Failed to get embeddings: ${e.message}")
             null
         }
     }
@@ -253,13 +250,13 @@ class ONNXMobileSAMProcessor(
         try {
             val originalShape = originalImageShape
             if (originalShape == null) {
-                println("❌ Original image shape not set")
+                println("Original image shape not set")
                 return@withContext null
             }
 
             // Prepare point input like the sample code
-            val inputPoint = floatArrayOf(x.toFloat(), y.toFloat())
-            val inputLabel = floatArrayOf(1f) // Positive point
+            floatArrayOf(x.toFloat(), y.toFloat())
+            floatArrayOf(1f) // Positive point
 
             // Add batch dimension and padding point
             val coordsArray = floatArrayOf(
@@ -289,7 +286,7 @@ class ONNXMobileSAMProcessor(
 
             // Prepare other inputs
             val maskInputShape = longArrayOf(1, 1, 256, 256)
-            val maskInputArray = FloatArray(1 * 1 * 256 * 256) { 0f }
+            val maskInputArray = FloatArray(1 * 1 * 256 * 256)
             val maskInputTensor = OnnxTensor.createTensor(
                 ortEnvironment!!,
                 FloatBuffer.wrap(maskInputArray),
@@ -375,7 +372,7 @@ class ONNXMobileSAMProcessor(
                                 }
                             }
                         } else {
-                            println("❌ Cannot extract mask from output")
+                            println("Cannot extract mask from output")
                             return@withContext null
                         }
                     }

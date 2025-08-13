@@ -9,8 +9,8 @@ import kotlin.math.*
  * Much faster than JTS STRtree for our use case
  */
 class FastSpatialIndex(
-    private val imageWidth: Int,
-    private val imageHeight: Int,
+    imageWidth: Int,
+    imageHeight: Int,
     private val cellSize: Int = 50
 ) {
     private val gridWidth = (imageWidth + cellSize - 1) / cellSize
@@ -182,7 +182,7 @@ class FastSpatialIndex(
 
             overlapPercentage >= threshold
 
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             false
         }
     }

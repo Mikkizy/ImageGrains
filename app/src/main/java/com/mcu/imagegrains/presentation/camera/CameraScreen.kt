@@ -11,10 +11,8 @@ import androidx.camera.view.PreviewView
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
@@ -63,6 +61,7 @@ import com.mcu.imagegrains.utils.CameraUtils
 import com.mcu.imagegrains.utils.CameraUtils.detectZoomGestures
 import com.mcu.imagegrains.utils.ImageUtils
 import kotlinx.coroutines.launch
+import java.util.Locale
 import kotlin.math.max
 import kotlin.math.min
 
@@ -208,7 +207,7 @@ fun CameraScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "${String.format("%.1f", zoomRatio)}x",
+                        text = "${String.format(Locale.getDefault(),"%.1f", zoomRatio)}x",
                         color = Color.White,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold
@@ -308,7 +307,7 @@ fun CameraScreen(
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "Range: ${String.format("%.1f", minZoomRatio)}x - ${String.format("%.1f", maxZoomRatio)}x",
+                        text = "Range: ${String.format(Locale.getDefault(), "%.1f", minZoomRatio)}x - ${String.format(Locale.getDefault(),"%.1f", maxZoomRatio)}x",
                         color = Color.White.copy(alpha = 0.8f),
                         fontSize = 8.sp
                     )

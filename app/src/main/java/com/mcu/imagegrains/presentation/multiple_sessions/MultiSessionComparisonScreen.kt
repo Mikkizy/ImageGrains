@@ -57,6 +57,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import kotlin.math.pow
+import androidx.core.graphics.withRotation
 
 
 @Composable
@@ -528,10 +529,9 @@ fun createMultiSessionComparisonChart(
     // Axis titles
     canvas.drawText("grain axis length (mm)", width/2f - textPaint.measureText("grain axis length (mm)")/2, height - 10f, textPaint)
 
-    canvas.save()
-    canvas.rotate(-90f, 20f, height/2f)
-    canvas.drawText("cumulative probability", 20f, height/2f, textPaint)
-    canvas.restore()
+    canvas.withRotation(-90f, 20f, height / 2f) {
+        drawText("cumulative probability", 20f, height / 2f, textPaint)
+    }
 
     return bitmap
 }

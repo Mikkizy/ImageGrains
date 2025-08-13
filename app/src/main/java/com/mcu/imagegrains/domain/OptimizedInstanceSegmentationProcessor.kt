@@ -6,13 +6,13 @@ import com.mcu.imagegrains.domain.models.GrainProperties
 import com.mcu.imagegrains.domain.models.LabelingResult
 import com.mcu.imagegrains.utils.EnhancedVisualizationUtils
 import com.mcu.imagegrains.utils.FastSpatialIndex
-import com.mcu.imagegrains.utils.GeometryOptimizer
 import com.mcu.imagegrains.utils.GrainCollectionUtils
 import com.mcu.imagegrains.utils.GrainPatchUtils
 import com.mcu.imagegrains.utils.ImageAnalysisUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.locationtech.jts.geom.Polygon
+import kotlin.math.sqrt
 import kotlin.system.measureTimeMillis
 
 data class OptimizedInstanceSegmentationResult(
@@ -30,6 +30,30 @@ data class OptimizedInstanceSegmentationResult(
             grainData = grainData,
             processingStats = processingStats.toProcessingStats()
         )
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as OptimizedInstanceSegmentationResult
+
+        if (allGrains != other.allGrains) return false
+        if (!labelsOut.contentDeepEquals(other.labelsOut)) return false
+        if (!maskAll.contentDeepEquals(other.maskAll)) return false
+        if (grainData != other.grainData) return false
+        if (processingStats != other.processingStats) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = allGrains.hashCode()
+        result = 31 * result + labelsOut.contentDeepHashCode()
+        result = 31 * result + maskAll.contentDeepHashCode()
+        result = 31 * result + grainData.hashCode()
+        result = 31 * result + processingStats.hashCode()
+        return result
     }
 }
 
@@ -76,7 +100,6 @@ class OptimizedInstanceSegmentationProcessor(
         predictionArray: Array<Array<FloatArray>>,
         labelingResult: LabelingResult,
         minArea: Int = 400,
-        removeEdgeGrains: Boolean = false,
         progressCallback: (Float) -> Unit = {}
     ): OptimizedInstanceSegmentationResult? = withContext(Dispatchers.Default) {
 
@@ -111,8 +134,8 @@ class OptimizedInstanceSegmentationProcessor(
             println("🔄 Processing ${coords.size} coordinates with optimized batching...")
 
             // Coordinate processing with optimization
-            var coordinateProcessingTime = 0L
-            var postProcessingTime = 0L
+            var coordinateProcessingTime: Long
+            var postProcessingTime: Long
 
             val allGrains = mutableListOf<Polygon>()
 
@@ -131,7 +154,7 @@ class OptimizedInstanceSegmentationProcessor(
 
             if (allGrains.isEmpty()) {
                 println("⚠️ No valid grains found during coordinate processing")
-                return@withContext createEmptyResult(coords.size, startTime, coordinateProcessingTime, 0L)
+                return@withContext createEmptyResult(coords.size, startTime, coordinateProcessingTime)
             }
 
             progressCallback(0.7f)
@@ -187,11 +210,11 @@ class OptimizedInstanceSegmentationProcessor(
             progressCallback(1.0f)
 
             println("✅ Optimized segmentation completed:")
-            println("   📊 Total time: ${totalProcessingTime}ms")
-            println("   📊 Coordinate processing: ${coordinateProcessingTime}ms")
-            println("   📊 Post-processing: ${postProcessingTime}ms")
-            println("   📊 Memory used: ${memoryUsedMB}MB")
-            println("   📊 Final grains: ${finalGrains.size}")
+            println("   Total time: ${totalProcessingTime}ms")
+            println("   Coordinate processing: ${coordinateProcessingTime}ms")
+            println("   Post-processing: ${postProcessingTime}ms")
+            println("   Memory used: ${memoryUsedMB}MB")
+            println("   Final grains: ${finalGrains.size}")
 
             OptimizedInstanceSegmentationResult(
                 allGrains = finalGrains,
@@ -216,7 +239,6 @@ class OptimizedInstanceSegmentationProcessor(
         predictionArray: Array<Array<FloatArray>>,
         labelingResult: LabelingResult,
         minArea: Int = 400,
-        removeEdgeGrains: Boolean = false,
         progressCallback: (Float) -> Unit = {}
     ): CompleteSegmentationResult? = withContext(Dispatchers.Default) {
 
@@ -226,8 +248,7 @@ class OptimizedInstanceSegmentationProcessor(
                 originalBitmap = originalBitmap,
                 predictionArray = predictionArray,
                 labelingResult = labelingResult,
-                minArea = minArea,
-                removeEdgeGrains = removeEdgeGrains
+                minArea = minArea
             ) { progress -> progressCallback(progress * 0.7f) }
 
             if (initialResult == null) {
@@ -249,8 +270,7 @@ class OptimizedInstanceSegmentationProcessor(
             val finalVisualization = EnhancedVisualizationUtils.createCompleteGrainVisualization(
                 originalBitmap = originalBitmap,
                 allGrains = finalGrains,
-                labels = finalLabels,
-                maskAll = finalMask
+                labels = finalLabels
             )
 
             // Calculate final properties
@@ -344,7 +364,7 @@ class OptimizedInstanceSegmentationProcessor(
                             }
                         }
                     } catch (e: Exception) {
-                        println("⚠️ Error processing coordinate ($x, $y): ${e.message}")
+                        println("Error processing coordinate ($x, $y): ${e.message}")
                     }
                 }
 
@@ -357,7 +377,7 @@ class OptimizedInstanceSegmentationProcessor(
                     System.gc()
                 }
 
-            } catch (e: OutOfMemoryError) {
+            } catch (_: OutOfMemoryError) {
                 println("❌ OOM in batch $batchIndex, forcing GC and continuing...")
                 System.gc()
             }
@@ -423,7 +443,7 @@ class OptimizedInstanceSegmentationProcessor(
                     val largestIndex = group.maxByOrNull { index ->
                         try {
                             validGrains[index].area
-                        } catch (e: Exception) {
+                        } catch (_: Exception) {
                             0.0
                         }
                     }
@@ -458,7 +478,7 @@ class OptimizedInstanceSegmentationProcessor(
             allGrains.filter { grain ->
                 try {
                     grain.area >= minArea && grain.isValid
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     false
                 }
             }
@@ -494,7 +514,7 @@ class OptimizedInstanceSegmentationProcessor(
                 val minDistToComponent = componentCoords.minOfOrNull { coord ->
                     val di = coord.first - clickPoint.first
                     val dj = coord.second - clickPoint.second
-                    kotlin.math.sqrt((di * di + dj * dj).toFloat())
+                    sqrt((di * di + dj * dj).toFloat())
                 } ?: Float.MAX_VALUE
 
                 if (minDistToComponent < minDistance) {
@@ -567,8 +587,7 @@ class OptimizedInstanceSegmentationProcessor(
     private fun createEmptyResult(
         totalCoords: Int,
         startTime: Long,
-        coordTime: Long,
-        postTime: Long
+        coordTime: Long
     ): OptimizedInstanceSegmentationResult {
         val processingTime = System.currentTimeMillis() - startTime
         return OptimizedInstanceSegmentationResult(
@@ -582,7 +601,7 @@ class OptimizedInstanceSegmentationProcessor(
                 finalGrainCount = 0,
                 processingTimeMs = processingTime,
                 coordinateProcessingTimeMs = coordTime,
-                postProcessingTimeMs = postTime
+                postProcessingTimeMs = 0L
             )
         )
     }

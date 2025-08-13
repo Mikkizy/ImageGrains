@@ -10,7 +10,7 @@ data class GrainSession(
     val name: String,
     val timestamp: Long = System.currentTimeMillis(),
     val imagePath: String,
-    val scaleCalibration: String, // JSON string
+    val scaleCalibration: String, // JSON string of ScaleCalibration
     val grainData: String, // JSON string of ScaledGrainData
     val statistics: String, // JSON string of GrainStatistics
     val histogramData: String // JSON string of GrainHistogramData

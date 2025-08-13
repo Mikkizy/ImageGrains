@@ -14,7 +14,7 @@ object WatershedUtils {
     ): Array<IntArray> {
         val height = image.size
         val width = image[0].size
-        val labels = Array(height) { IntArray(width) { 0 } }
+        val labels = Array(height) { IntArray(width) }
 
         // Copy markers to labels
         for (i in 0 until height) {

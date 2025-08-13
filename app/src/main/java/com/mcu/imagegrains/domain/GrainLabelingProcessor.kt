@@ -19,7 +19,7 @@ class GrainLabelingProcessor {
         dbsMaxDist: Double = 20.0
     ): LabelingResult = withContext(Dispatchers.Default) {
 
-        println("🔄 Starting grain labeling process...")
+        println("Starting grain labeling process...")
 
         val height = imagePred.size
         val width = imagePred[0].size
@@ -34,7 +34,7 @@ class GrainLabelingProcessor {
         // Label connected components
         val (labelsSimple, nElems) = ImageAnalysisUtils.labelConnectedComponents(grains, 1)
 
-        println("✅ Found $nElems simple grain components")
+        println("Found $nElems simple grain components")
 
         // Calculate region properties for simple grains
         val grainDataSimple = ImageAnalysisUtils.calculateRegionProperties(labelsSimple, image)
@@ -47,7 +47,7 @@ class GrainLabelingProcessor {
         // Filter out prompts that are likely background
         coordsSimple = filterBackgroundPrompts(coordsSimple, imagePred)
 
-        println("✅ Generated ${coordsSimple.size} simple prompts")
+        println("Generated ${coordsSimple.size} simple prompts")
 
         // Process grain boundaries (channel 2)
         val bounds = Array(height) { i ->
@@ -73,10 +73,10 @@ class GrainLabelingProcessor {
         var allCoords = coordsSimple
 
         if (validLabels.isNotEmpty()) {
-            println("🔄 Processing boundary-based watershed segmentation...")
+            println("Processing boundary-based watershed segmentation...")
 
             // Find largest label
-            val largestLabel = labelCounts.drop(1).withIndex().maxByOrNull { it.value }?.index?.plus(1) ?: 1
+            labelCounts.drop(1).withIndex().maxByOrNull { it.value }?.index?.plus(1) ?: 1
 
             // Merge all valid labels into largest label
             val processedBounds = Array(height) { i ->
@@ -110,7 +110,7 @@ class GrainLabelingProcessor {
                     println("✅ Found ${coordsWS.size} watershed coordinates")
 
                     // Perform watershed segmentation
-                    val markers = Array(height) { IntArray(width) { 0 } }
+                    val markers = Array(height) { IntArray(width) }
                     coordsWS.forEachIndexed { index, coord ->
                         val x = coord[0]
                         val y = coord[1]

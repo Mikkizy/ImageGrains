@@ -15,7 +15,7 @@ object ImageAnalysisUtils {
     ): Pair<Array<IntArray>, Int> {
         val height = binaryImage.size
         val width = binaryImage[0].size
-        val labels = Array(height) { IntArray(width) { 0 } }
+        val labels = Array(height) { IntArray(width) }
         var currentLabel = 0
 
         // 4-connectivity or 8-connectivity neighbors

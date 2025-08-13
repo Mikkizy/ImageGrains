@@ -6,8 +6,6 @@ import com.mcu.imagegrains.domain.models.InputTensorInfo
 import com.mcu.imagegrains.domain.models.OutputTensorInfo
 import com.mcu.imagegrains.domain.models.QuantizationParams
 import org.tensorflow.lite.Interpreter
-import org.tensorflow.lite.gpu.CompatibilityList
-import org.tensorflow.lite.gpu.GpuDelegate
 import java.io.FileInputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -43,7 +41,7 @@ class TFLiteSemanticSegmentationModel(
                     addDelegate(GpuDelegate(delegateOptions))
                     println("✅ Using GPU delegate for TFLite")
                 } else {
-                    println("📱 Using CPU for TFLite (GPU not available)")
+                    println("Using CPU for TFLite (GPU not available)")
                 }*/
             }
 
@@ -54,8 +52,8 @@ class TFLiteSemanticSegmentationModel(
             extractTensorDetails()
 
             println("✅ TFLite Semantic Segmentation Model initialized successfully")
-            println("Input details: ${inputDetails}")
-            println("Output details: ${outputDetails}")
+            println("Input details: $inputDetails")
+            println("Output details: $outputDetails")
 
             true
         } catch (e: Exception) {
@@ -128,13 +126,13 @@ class TFLiteSemanticSegmentationModel(
 
         try {
             // Validate input
-            if (imageTile.size == 0 || imageTile[0].size == 0 || imageTile[0][0].size != 3) {
+            if (imageTile.isEmpty() || imageTile[0].isEmpty() || imageTile[0][0].size != 3) {
                 throw IllegalArgumentException("Input image tile must be 3D with 3 channels")
             }
 
-            val height = imageTile.size
-            val width = imageTile[0].size
-            val channels = imageTile[0][0].size
+            imageTile.size
+            imageTile[0].size
+            imageTile[0][0].size
 
             // Prepare input buffer
             val inputBuffer = prepareInputBuffer(imageTile, inputDetails)

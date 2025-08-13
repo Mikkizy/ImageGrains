@@ -7,7 +7,25 @@ object DBSCANUtils {
     data class DBSCANResult(
         val labels: IntArray,
         val numClusters: Int
-    )
+    ) {
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as DBSCANResult
+
+            if (numClusters != other.numClusters) return false
+            if (!labels.contentEquals(other.labels)) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = numClusters
+            result = 31 * result + labels.contentHashCode()
+            return result
+        }
+    }
 
     /**
      * DBSCAN clustering algorithm

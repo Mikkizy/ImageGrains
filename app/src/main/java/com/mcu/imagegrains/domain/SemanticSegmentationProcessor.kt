@@ -6,13 +6,32 @@ import android.net.Uri
 import com.mcu.imagegrains.utils.ImageProcessingUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlin.math.*
 
 data class SemanticSegmentationResult(
     val predictionBitmap: Bitmap,
     val predictionArray: Array<Array<FloatArray>>,
     val originalArray: Array<Array<FloatArray>>
-)
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as SemanticSegmentationResult
+
+        if (predictionBitmap != other.predictionBitmap) return false
+        if (!predictionArray.contentDeepEquals(other.predictionArray)) return false
+        if (!originalArray.contentDeepEquals(other.originalArray)) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = predictionBitmap.hashCode()
+        result = 31 * result + predictionArray.contentDeepHashCode()
+        result = 31 * result + originalArray.contentDeepHashCode()
+        return result
+    }
+}
 
 class SemanticSegmentationProcessor(
     private val context: Context,
@@ -189,15 +208,13 @@ class SemanticSegmentationProcessor(
         // Initialize prediction array
         val imagePred = Array(finalImage.size) {
             Array(finalImage[0].size) {
-                FloatArray(3) { 0f }
+                FloatArray(3)
             }
         }
-
-        var totalTiles = 0
         var processedTiles = 0
 
         // Count total tiles for progress tracking
-        totalTiles = (c + 1) * (2 * r - 2) + 2 * (c + 1) + c * (2 * r - 2) + 2 * c
+        val totalTiles: Int = (c + 1) * (2 * r - 2) + 2 * (c + 1) + c * (2 * r - 2) + 2 * c
 
         println("🔄 Segmenting image tiles... (${totalTiles} tiles total)")
 

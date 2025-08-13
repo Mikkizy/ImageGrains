@@ -99,7 +99,7 @@ object ImageUtils {
                 ExifInterface.ORIENTATION_ROTATE_270 -> rotateBitmap(bitmap, 270f)
                 else -> bitmap
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             bitmap
         }
     }
@@ -166,7 +166,7 @@ object ImageUtils {
     fun loadImageFromPath(imagePath: String): Bitmap? {
         return try {
             BitmapFactory.decodeFile(imagePath)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
         }
     }
@@ -177,19 +177,8 @@ object ImageUtils {
     fun deleteImage(imagePath: String): Boolean {
         return try {
             File(imagePath).delete()
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             false
-        }
-    }
-
-    /**
-     * Get image file size in bytes
-     */
-    fun getImageSize(imagePath: String): Long {
-        return try {
-            File(imagePath).length()
-        } catch (e: Exception) {
-            0L
         }
     }
 
@@ -261,7 +250,7 @@ object ImageUtils {
             imageUri?.let { uri ->
                 try {
                     context.contentResolver.delete(uri, null, null)
-                } catch (deleteEx: Exception) {
+                } catch (_: Exception) {
                     // Log.e("SaveBitmap", "Error deleting MediaStore entry after failure: $deleteEx")
                 }
             }
