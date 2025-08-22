@@ -1,0 +1,549 @@
+% Document class `report-template` accepts either project-plan or final-report option in
+% []. This will change the title page as necessary.
+\documentclass[final-report]{report-template}
+% \documentclass[final-report]{report-template}
+
+% Packages I use in my report.
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{blindtext}
+\usepackage{natbib}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage[utf8]{inputenc}
+
+% Directory where I saved my figures.
+\graphicspath{{./figures/}}
+
+% Metadata used for the title page - please modify.
+\university{Imperial College London}
+\department{Department of Earth Science and Engineering}
+\course{MSc in Geo-Energy with Machine Learning and Data Science}
+\title{Next-Gen Sedimentology: Automating Grain-Size Measurements with Machine Learning}
+\author{Miracle Chukwuebuka Ukaka}
+\email{miracle.ukaka24@imperial.ac.uk}
+\githubusername{esemsc-mcu24}
+\supervisors{Dr. Rebecca Bell\\
+             Dr. Alexander Whittaker\\
+             Nahin Rezwan}
+\repository{https://github.com/ese-ada-lovelace-2024/irp-mcu24}
+
+\begin{document}
+
+\maketitlepage  % generate title page
+
+\tableofcontents
+\newpage
+
+% Abstract
+\section{Abstract}
+Traditional grain-size analysis in sedimentology relies on labor-intensive manual measurements that limit the scope and efficiency of geological and geomorphic fieldwork. While recent advances in deep learning, particularly the Cellpose and Segmenteverygrain frameworks, have demonstrated high accuracy in automated grain segmentation, a critical gap existed between laboratory-proven technology and practical field deployment. This project successfully bridged this gap by developing a comprehensive Android mobile application that integrates the validated Segmenteverygrain model and Segment Anything Model (SAM) for real-time grain-size analysis in both laboratory and field environments. The resulting mobile application was developed using Android Studio with Kotlin, implementing a robust architecture that includes camera integration via CameraX API, real-time machine learning inference, comprehensive image processing capabilities, and intuitive user interface design. Key technical achievements include successful model optimization to under 100 MB while preserving measurement accuracy, implementation of real-time processing capabilities for immediate field feedback, and comprehensive data management with support for CSV data exports. The application enables automated computation of critical sedimentological metrics such as median and coarse-percentile grain size directly from smartphone cameras, eliminating the need for specialized equipment or internet connectivity. Validation testing also demonstrated the application's effectiveness across a diverse range of environments containing sediment and varying Android device specifications. 
+
+
+% Introduction section
+\section{Introduction}
+\subsection{Background and Problem Description}
+Grain-size distributions of clastic sediments are fundamental to unraveling the dynamics of sediment transport, depositional processes, and their links to tectonic and climatic forcings. Grain-size distribution patterns also play a key role in basin analysis, as these patterns reflect the complex interplay between tectonic processes, sediment supply, and depositional environments \citep{allen2005basin}. In gravel‐dominated fluvial systems, particle size not only controls bedload mobility and channel morphology but also preserves information about past hydrodynamic conditions and source-area characteristics \citep{Church2006}. According to research by \cite{Alexander2011}, it is now feasible to obtain quantitative data on the geological boundary conditions controlling the evolution of sedimentary basins by inverting time-averaged grain-size trends in stratigraphy. 
+
+Traditionally, grain‐size data have been obtained through sieving of bulk samples or by manually measuring individual clasts with calipers in the field \citep{Bunte2001}, or by using a "Wolman point count" of 100 randomly selected clasts \citep{Wolman1954}. Although these approaches yield accurate measurements, they are inherently labor‐intensive, time‐consuming, and spatially limited,  particularly when analyzing large datasets across extensive depositional systems \citep{Duller2010}.
+
+To overcome these constraints, photo‐based methods—ranging from manual line‐count grids to semi‐automated image analysis—have been increasingly adopted \citep{Graham2010, Purinton2019}. By capturing orthorectified photographs or drone‐derived orthoimages, it is possible to measure grain dimensions. Photo-based methods, while offering improvements over manual measurements, still introduce sources of uncertainty including occlusion by matrix or overlapping clasts, perspective distortion, and the two-dimensional projection of three-dimensional grains \citep{Garefalakis2023}. Semi-automated approaches require significant manual intervention and specialized software, limiting their practical application in field settings.
+
+Recent advances in computer vision and deep learning have opened the door to fully automated grain segmentation and sizing. Convolutional neural networks (CNNs), particularly U‐Net‐style architectures and transfer‐learning frameworks like Cellpose, can be retrained to recognize individual sediment particles in close‐range and high‐resolution drone imagery (Mair et al., 2023). By fitting ellipses or convex hulls to each segmented grain, it becomes possible to compute percentile metrics (e.g., D16, D50, D84) across entire exposures with minimal human input. \cite{Mair2023} shows that a Cellpose model, originally developed for biomedical cell segmentation, can be fine‐tuned on as little as 10\%–20\% of the annotated data required by previous methods, and still outperform existing algorithms in both precision and recall. Also, the need to measure grain size in granular materials has been addressed by the Python module segmenteverygrain \citep{Sylvester2025} which combines the Segment Anything Model (SAM) with a U-Net-style convolutional neural network to detect and measure grains or clasts in diverse image types.  It has been effectively applied to: photomicrographs of sandstone and thin sections of oolitic limestone; photos of gravel and cobbles on beaches and river bars; photos of sand and detrital zircon grains; and images of boulder fields on asteroids, with very good results obtained.
+
+However, a critical gap existed between these laboratory-scale computational advances and practical field deployment, as there is a need for these solutions to be deployed onsite into platforms that make it easy to be utilized by the end-user. This is where the field of mobile data science comes in very useful as it has evolved rapidly, with \cite{Iqbal2020, Iqbal2021} highlighting the importance of context-aware machine learning applications that can adapt to varying environmental conditions and user requirements. The integration of machine learning models into mobile applications presents unique challenges and opportunities that have been increasingly recognized across various domains. As noted by \cite{Ajani2021} and \cite{Lane2017}, the deployment of machine learning within embedded and mobile devices requires careful optimization to address constraints related to computational resources, power consumption, and real-time processing requirements. 
+
+TensorFlow Lite (TFLite) has emerged as a leading framework for mobile machine learning deployment, running on more than 4 billion devices globally. This framework enables offline AI model deployment, reducing latency, preserving privacy, and decreasing reliance on network connectivity, making it particularly suitable for real-time applications like image recognition \citep{Channonthawat2016}. The advantages of on-device processing are particularly relevant for geological fieldwork, where internet connectivity may be limited or absent, and where immediate analysis results can inform sampling strategies and field decisions \citep{Veeramani2022, Dai2020}. Also, the Open Neural Network Exchange (ONNX) framework has brought several advantages to machine learning and deep learning for mobile development. Models can be trained in any framework (such as PyTorch, TensorFlow, or scikit-learn) and then deployed across several platforms with little difficulty thanks to ONNX's standardised, open format \citep{joshua2025cross}.
+
+The challenge of integrating sophisticated computer vision models into mobile applications extends beyond technical optimization \cite{Arpteg2018}. \cite{Roger2021} emphasizes that successful integration of convolutional neural networks in mobile applications requires consideration of user interface design, model performance under varying conditions, and robust error handling. Similarly, \cite{Lyan2023} discusses the importance of comprehensive frameworks like AppCraft for streamlining the machine learning model integration process into mobile applications.
+
+Furthermore, the democratization of advanced analytical capabilities through mobile technology represents a paradigm shift in how geological fieldwork can be conducted. Traditional approaches to grain-size analysis often require specialized equipment, laboratory facilities if collecting samples for later granulometric analysis, and extensive post-processing workflows. A mobile application integrating validated machine learning models as a proposed solution could eliminate these barriers, enabling immediate analysis and decision-making in field environments while maintaining the accuracy and precision demonstrated in laboratory settings.
+
+\subsection{Aim}
+To develop, validate, and deploy a comprehensive Android mobile application that integrates the validated Segmenteverygrain segmentation model and Mobile Segment Anything Model (MobileSAM) for accurate, efficient, and accessible grain size analysis in both laboratory and field environments, thereby bridging the gap between proven machine learning technology and practical geological applications.
+
+\subsection{Objectives}
+1. Convert existing Segmenteverygrain and MobileSAM models into mobile formats which include TfLite and ONNX formats respectively.
+
+2. Design and develop an Android application with model integration.
+
+3. Field-test, document, and refine the integrated system.
+
+Ultimately, this integrated approach promises to accelerate sediment‐routing studies, improve reproducibility, and deliver a toolset that benefits both academic researchers and industry practitioners in geomorphology, petroleum reservoir characterization, and environmental monitoring.
+
+% Another section
+\section{Methodology}
+This research implemented a mobile grain analysis system using deep learning models for semantic and instance segmentation, deployed on Android devices. The methodology comprised model conversion and optimization, mobile application development, and integration of computer vision pipelines for real-time grain analysis.
+\subsection{Model Selection and Architecture}
+The project employed a two-stage segmentation approach utilizing state-of-the-art computer vision models optimized for mobile deployment. The implementation leveraged the SegmentEveryGrain model for semantic segmentation and Facebook's MobileSAM (Mobile Segment Anything Model) for instance segmentation. This hybrid approach was chosen to maximize segmentation accuracy while maintaining computational efficiency suitable for mobile devices. Initially, the Cellpose-based model was used, but after converting to ONNX format, the model size increased significantly to about 1GB, which is a poor use-case for mobile deployment.  
+
+The SegmentEveryGrain model, specifically designed for geological applications, provides pixel-level classification to distinguish grain regions from background areas. This model generates binary masks identifying grain pixels and produces corresponding coordinate labels for subsequent processing stages. MobileSAM, a lightweight variant of the Segment Anything Model (SAM), offers precise instance segmentation with significantly reduced computational requirements compared to the original SAM architecture \citep{decoupled_distillation_img}, making it suitable for mobile deployment. MobileSAM provides precise instance-level segmentation by generating individual masks for each grain object, enabling accurate grain counting and morphological analysis. An alternative to the MobileSAM is the FastSAM model which uses a lesser number of parameters. However, when evaluated using the prompts generated from the Segmenteverygrain semantic segmentation model, the model produced mediocre masks for grain segmentation as the masks had very rough boundaries and were not distinct. Hence, MobileSAM was chosen because of its high accuracy masks, smooth boundary detections, and accurate layer distinctions.
+\begin{figure}[hbt!]
+    \centering
+    \includegraphics[width=1\linewidth]{latex/figures/mobilesam architecture.jpg}
+    \caption{\textit{MobileSAM Architecture}}
+    \label{fig:1}
+\end{figure}
+
+\subsection{Semantic Segmentation Model Optimization}
+The semantic segmentation pipeline began with the conversion of the pre-trained SegmentEveryGrain model from Keras format to TensorFlow Lite (TFLite) format. This conversion process involved several optimization steps to ensure efficient mobile execution.
+
+The Keras model was first exported to the SavedModel format, preserving the complete model architecture and trained weights. Subsequently, the TensorFlow Lite Converter was employed to generate an optimized TFLite model with post-training quantization applied. Dynamic range quantization was implemented to reduce model size while maintaining inference accuracy, converting 32-bit floating-point weights to 16-bit integers where appropriate.
+
+The optimized semantic segmentation model generates pixel-wise classifications, distinguishing between grain regions and background materials. The model outputs probability maps that identify regions of interest containing sediment grains, which serve as the foundation for subsequent instance segmentation processing.
+
+% \begin{figure} [hbt!]
+%     \centering
+%     \includegraphics[width=0.6\linewidth]{semantic_seg_converter.png}
+%     \caption{Python Code for Converting Semantic Segmentation Model from Keras to TFLite Format}
+%     \label{fig:2}
+% \end{figure}
+
+\subsection{Instance Segmentation Model Conversion and Optimization}
+The MobileSAM model underwent a specialized conversion process to enable mobile deployment while preserving its powerful instance segmentation capabilities. The complete MobileSAM architecture was initially converted to Open Neural Network Exchange (ONNX) format to ensure cross-platform compatibility and facilitate model optimization.
+
+A critical optimization involved extracting the image encoder component from the complete MobileSAM ONNX model. This separation allowed for more efficient processing by isolating the computationally intensive image encoding stage, which would be executed once per image, from the prompt-based segmentation stage, which could be applied to multiple regions within the same encoded representation. It also allowed independent optimization of the encoding stage, reduced computational overhead during inference, and improved memory management on resource-constrained devices.
+
+The extracted image encoder processes input images to generate rich feature representations that capture spatial and semantic information necessary for accurate segmentation. These encoded features serve as the foundation for subsequent prompt-guided instance segmentation operations.
+
+% \begin{figure}[hbt!]
+%     \centering
+%     \includegraphics[width=0.65\linewidth]{mobilesam_encoder_export.png}
+%     \caption{Python Code Snippet for Converting and Exporting Image Encoder}
+%     \label{fig:3}
+% \end{figure}
+
+\subsection{Prompt Generation and Coordinate Processing}
+The integration between semantic and instance segmentation models required the development of sophisticated prompt generation algorithms. The semantic segmentation results, which provide pixel-wise grain/background classifications, were processed to extract spatial coordinates and regions of interest that serve as prompts for the MobileSAM instance segmentation model.
+
+The prompt generation pipeline analyzes the semantic segmentation output to identify connected components representing potential grain regions. Centroid coordinates and bounding box information are computed for each identified region, generating point prompts and box prompts that guide the instance segmentation process. This approach ensures that the instance segmentation model focuses computational resources on regions most likely to contain individual grains, improving both accuracy and efficiency.
+
+The coordinate processing algorithms incorporate morphological operations to refine grain boundaries and eliminate noise artifacts that could negatively impact segmentation quality. Watershed operations are applied to smooth irregular boundaries while preserving grain shape characteristics essential for accurate size measurements.
+
+\subsection{Instance Segmentation Results Processing and Scaling}
+The output from the MobileSAM instance segmentation model requires comprehensive post-processing to generate accurate grain measurements. The model produces segmentation masks for individual grains, which are then processed to extract morphometric parameters including area, perimeter, major axis length, minor axis length, and equivalent diameter.
+
+Scaling algorithms were implemented to convert pixel-based measurements to real-world dimensions. The application allows users to include scale markers (such as scale bars, coins, or rulers) within the field of view. The user makes use of these markers to establish the pixel-to-millimeter conversion factor necessary for accurate grain size quantification.
+The scaling process accounts for perspective distortion and camera distance variations by implementing geometric correction algorithms. These corrections ensure measurement accuracy across different imaging conditions and camera orientations commonly encountered in field environments.
+
+Statistical analysis of the segmented grains generates standard sedimentological metrics including the 16th, 50th and 84th percentiles (D16, D50 and D84 respectively), which are fundamental parameters for understanding sediment transport dynamics and depositional processes \citep{Purinton2019}. The application computes these metrics in real-time, providing immediate feedback to field researchers. In order to generate ground truth measurements for model accuracy measurement and comparison, ImageJ software was used to carry out the Wolfman point count by placing grids over the image and grain axes are measured at random intersections.
+
+\subsection{Android Application Development and User Interface Design}
+The Android application was developed using Android Studio with Kotlin as the primary programming language, following modern Android development best practices and Material Design guidelines. The application architecture implements the Model-View-ViewModel (MVVM) pattern to ensure maintainable, testable, and scalable code organization.
+
+\subsubsection{Application Screen Architecture}
+The application comprises eleven distinct screens with light and dark mode compatibility, each designed to support specific aspects of the grain analysis workflow. Figure \ref{fig:4} shows the screens in light mode. The screens include:
+\begin{itemize}
+    \item \textbf{Splash Screen}: Implements application startup procedures, including model loading and initialization processes that ensure optimal performance upon launch.
+\end{itemize}
+\begin{itemize}
+    \item \textbf{Home Screen}: Serves as the primary navigation hub, providing access to all application features including new analysis sessions, historical/stored data review, and usage tips.
+\end{itemize}
+\begin{itemize}
+    \item \textbf{Camera Screen}: Implements advanced camera functionality using Android's CameraX API, providing real-time preview capabilities with overlay guides for optimal image capture. The screen includes automatic focus and exposure controls optimized for geological specimen photography.
+\end{itemize}
+\begin{itemize}
+    \item \textbf{Photo Upload Screen}: The user can also select grain photos from their device's gallery or file storage, and perform segmentation on them.
+\end{itemize}
+\begin{itemize}
+    \item \textbf{Photo Display Screen}: Offers comprehensive image viewing capabilities with image information that enables detailed examination of captured specimens.
+\end{itemize}
+\begin{itemize}
+    \item \textbf{Semantic Segmentation Screen}: Provides visualization of the semantic segmentation results, showing the distinction between grain regions and background materials through color-coded overlays.
+\end{itemize}
+\begin{itemize}
+    \item \textbf{Scale Calibration Screen}: Guides users through the scale calibration process, ensuring accurate real-world measurements through reference object detection and measurement.
+\end{itemize}
+\begin{itemize}
+    \item \textbf{Instance Segmentation Screen}: Displays real-time processing of individual grain segmentation, allowing users to monitor the analysis progress and quality of grain boundary detection.
+\end{itemize}
+\begin{itemize}
+    \item \textbf{Multiple Sessions Screen}: Manages multiple analysis sessions, allowing users to organize and compare results from different sampling locations or time periods.
+\end{itemize}
+\begin{itemize}
+    \item \textbf{Session Details Screen}: Provides detailed information about individual analysis sessions, including metadata, processing parameters, and summary statistics.
+\end{itemize}
+\begin{itemize}
+    \item \textbf{ Saved Sessions Screen}: Displays organized lists of completed analysis sessions to facilitate data management.
+\end{itemize}
+\begin{itemize}
+    \item \textbf{Result Overview Screen}: Presents comprehensive analysis results including grain size distributions, statistical summaries, cumulative distribution function (CDF) curves, and exportable data formats.
+\end{itemize}
+
+\subsubsection{Technical Implementation Details}
+The application integrates TensorFlow Lite Interpreter API for semantic segmentation model execution and ONNX Runtime for Android to handle MobileSAM inference operations. This dual-runtime approach optimizes performance by leveraging the strengths of each framework for their respective model types.
+
+Memory management and optimization procedures were implemented using Android's Garbage Collector framework to handle computationally intensive operations without crashing the application. Asynchronous processing ensures responsive user interactions while complex segmentation operations execute in parallel threads.
+
+Local data storage utilizes SQLite database through Android's Room persistence library, providing robust data management with automatic backup and recovery capabilities. The database schema accommodates metadata storage, analysis results, and user preferences while maintaining data integrity across application sessions.
+
+Export functionality supports sharing generated data in CSV format for statistical analysis. Standardized data schemas ensure compatibility with existing geological software and help to facilitate collaborative research workflows.
+
+\begin{figure}[hbt!]
+    \centering
+    \includegraphics[width=1\linewidth]{latex/figures/screens_nav_chart.png}
+    \caption{\textit{Navigation Flowchart of All Screens in Android Application}}
+    \label{fig:2}
+\end{figure}
+
+\newpage
+\section{Results}
+\subsection{Model Conversion and Performance Validation Results}
+\begin{table}[!hbt]
+    \centering
+    \begin{tabular}{|p{2cm}||p{3cm}|p{3cm}|p{3cm}|p{3cm}|}
+    \hline
+        \textbf{Metric} & \textbf{Original Keras Model (Semantic)} & \textbf{Converted TFLite Model(Semantic)}& \textbf{Original SAM Model (Instance)} & \textbf{Converted ONNX Model (Instance)}\\
+        \hline
+        Model Size (MB) & 25.53 & 4.25 & 2504 & 32\\
+        \hline
+        Memory Usage (MB) & 1700 & 110 & 8345 & 1200\\ 
+    \hline
+    \end{tabular}
+    \caption{Comparison Between Original and Converted Semantic and Instance Segmentation Models}
+    \label{tab:1}
+\end{table}
+The successful conversion and optimization of both segmentation models represents a significant technical achievement in mobile machine learning deployment, as shown in Table \ref{tab:1}. The semantic segmentation model achieved an 83\% size reduction from 25.53 MB to 4.25 MB, while simultaneously reducing memory usage from 1700 MB to 110 MB—a remarkable 93\% reduction. This optimization was achieved through dynamic range quantization that converted 32-bit floating-point weights to 16-bit integers, demonstrating the effectiveness of TensorFlow Lite's optimization framework for geological applications.
+
+Similarly, the MobileSAM instance segmentation model conversion from the original SAM's 2504 MB to 32 MB (a 99\% reduction) while maintaining functional performance validates the viability of deploying sophisticated computer vision models on mobile devices. The memory usage reduction from 8345 MB to 1200 MB, though still substantial, reflects the computational complexity of instance segmentation tasks. These optimizations enabled real-time processing on consumer smartphones without requiring cloud connectivity, addressing a critical barrier to field deployment of advanced analytical tools in geology.
+
+The dual-runtime approach using TensorFlow Lite for semantic segmentation and ONNX Runtime for instance segmentation proved effective, leveraging the strengths of each framework. This architectural decision enabled optimal performance for each model type while maintaining system stability across diverse Android devices.
+\subsubsection{Semantic Segmentation Model Performance}
+Semantic segmentation differentiates grains from their environment and uses colours to show variations.
+
+
+\begin{itemize}
+    \item Green colour - Grains
+\end{itemize}
+\begin{itemize}
+    \item Red colour - Background
+\end{itemize}
+\begin{itemize}
+    \item Blue colour - Grain Boundaries
+\end{itemize}
+\begin{itemize}
+    \item Black dots - Generated Coordinates for Point Prompts
+\end{itemize}
+
+\subsubsection{Instance Segmentation Model Performance}
+Instance segmentation was implemented to generate masks and segment individual grains detected in the image, with proper detection of overlapping areas using the generated coordinates and prompts from the semantic segmentation results. 
+
+\begin{figure}[!hbt]
+\centering
+\begin{subfigure}[t]{1\textwidth}
+    \centering
+    \includegraphics[width=1\linewidth]{latex/figures/semantic.png}
+    \caption{Semantic Segmentation Results for Four Images}
+    \label{fig:3a}
+\end{subfigure}
+
+
+\begin{subfigure} [t]{1\textwidth} 
+    \centering
+    \includegraphics[width=1\linewidth]{latex/figures/instance_masked_image.png}
+    \caption{Masked Grains from Instance Segmentation Results of Four Images}
+    \label{fig:3b}
+\end{subfigure}
+
+ % \caption{Some general caption of all the figures. In (\subref{fig:timing1}) you can see a  green square....}
+ \caption{\textit{Model conversion validation for mobile deployment. (a) Semantic segmentation comparing original Keras models (middle) with converted TensorFlow Lite models (bottom) across four sediment samples. Green colour indicates grains, red for background, blue for grain boundaries, and black for prompts. (b) Instance segmentation comparing original SAM models (middle) with converted ONNX models (bottom) for the same samples, with each grain color-coded uniquely in instance segmentation.}}
+ \label{fig:3}
+
+\end{figure}
+
+\newpage
+The results in Figure \ref{fig:3} demonstrate the effectiveness of the two-stage segmentation approach. The semantic segmentation shown in Figure \ref{fig:3a} successfully distinguishes grain regions (green), background areas (red), and grain boundaries (blue), while generating appropriate coordinate prompts (black dots) for subsequent instance segmentation. This color-coded visualization provides immediate feedback on model performance and enables quality assessment during field operations.
+
+The instance segmentation results in Figure \ref{fig:3b} show clear individual grain delineation with proper handling of overlapping and touching grains—a common challenge in granular material analysis. The masked outputs demonstrate the system's capability to separate complex grain arrangements that would be difficult to analyze manually, particularly in dense packing scenarios commonly encountered in fluvial sediments. By using semantic segmentation results to guide instance segmentation, the system focuses computational resources on grain-containing regions, improving both accuracy and processing efficiency.
+\subsection{Application Development Results}
+The android application was successfully developed with a comprehensive eleven-screen architecture using Android Studio and Jetpack Compose framework. The application interface was designed to provide an intuitive, step-by-step workflow for grain analysis while maintaining professional functionality and user accessibility.
+
+\begin{figure} [!hbt]
+    \centering
+    \includegraphics[width=18cm, height=13cm]{latex/figures/app-screens.png}
+    \caption{\textit{Complete mobile application interface showing all eleven implemented screens: (a) Splash screen with application branding, (b) Home screen with capture options, (c) Camera screen with zoom controls, (d) Photo display for confirmation, (e) Semantic segmentation visualization, (f) Scale calibration interface, (g) Instance segmentation processing, (h) Results overview with statistics, (i) Saved sessions list, (j) Session details view, and (k) Session comparison interface.}}
+    \label{fig:4}
+\end{figure}
+\newpage
+All screens in Figure \ref{fig:4} were optimized for mobile interaction with responsive design elements, intuitive navigation patterns, and clear visual hierarchies. The interface incorporates Material Design 3 principles ensuring consistency with Android platform standards while providing specialized functionality for scientific grain analysis applications.
+
+The completed application interface successfully demonstrates seamless integration of complex computer vision processing within an accessible mobile platform, achieving the research objective of making professional-grade grain analysis available through consumer mobile devices.
+
+\subsection{Grain Size Measurement Results}
+\begin{figure}[!hbt] 
+    \centering
+    \includegraphics[width=17cm, height=13cm]{latex/figures/grain-size-measurements.png}
+    \caption{\textit{Field validation of mobile grain size analysis across five diverse sediment locations (a-e) showing original images with scale cards, automated segmentation masks, and corresponding grain size distribution histograms with cumulative distribution functions for major (blue) and minor (orange) axis.}}
+    \label{fig:5}
+\end{figure}
+
+This comprehensive field validation demonstrates how the application performs across five diverse sedimentary environments using the direct camera processing method. The top row shows original field photographs with standardized scale references (red cards), while the middle row displays corresponding segmentation masks where each detected grain is uniquely color-coded for individual identification and measurement. The bottom row presents grain morphology analysis through cumulative distribution functions (CDFs) and histograms, comparing major axis lengths (blue) versus minor axis lengths (orange) for each detected grain. Results in Figure \ref{fig:5} reveal consistent morphological patterns across all locations, with major axes systematically larger than minor axes, reflecting natural grain elongation characteristics. 
+\subsection{Camera versus Uploaded Photo Results}
+\begin{figure} [!hbt]
+    \centering
+    \includegraphics[width=18cm, height=15cm]{latex/figures/cam-upload-grains.png}
+    \caption{\textit{Comparison of camera versus upload photo methods for grain size analysis across different sediment samples, showing original images, segmentation masks, and normal distribution CDFs for major and minor axis measurements with D16, D50, D84 percentiles and grain count statistics.}}
+    \label{fig:6}
+\end{figure}
+
+The comparative analysis across different sediment samples reveals distinct performance characteristics between camera and upload photo methods for automated grain size analysis, as shown in Figure \ref{fig:6}. Visual inspection of the segmentation masks demonstrates that the upload photo method consistently detects significantly more grains than the camera method across all samples, with detection ratios ranging from approximately 1.5× to 2.0×.
+
+The cumulative distribution function (CDF) analysis shows systematic differences in grain size measurements between methods. For both major and minor axes, the camera method consistently produces smaller grain statistics compared to the upload method, as evidenced by the leftward shift of the camera CDFs relative to upload CDFs. The D16, D50, and D84 percentile markers reveal that these differences are consistent across the entire grain size distribution, suggesting a systematic bias rather than random measurement error. The upload method's superior grain detection translates to larger sample sizes, which theoretically should improve statistical precision. However, the camera method demonstrates more consistent performance across different image conditions, with narrower confidence intervals around key percentiles.
+
+\subsection{Device Compatibility Assessment}
+\begin{table}[!hbt]
+    \centering
+    \begin{tabular}{ |p{3cm}||p{2cm}|p{2cm}|p{2cm}|p{2cm}|p{2cm}| }
+     \hline
+     \multicolumn{6}{|c|}{\textbf{Edge Device}} \\
+     \hline
+     \textbf{Metric}& Samsung Galaxy A54 &Samsung Galaxy S22 Ultra&Samsung Galaxy Tab S7 plus&Google Pixel 8 Pro&Motorola G54 \\
+     \hline
+     Android Version   & 15    &15&   13& 16    &15\\
+     \hline
+     Processor&   Exynos 1380 (5 nm)  & Qualcomm Snapdragon 8 Gen 1(4nm)   &Qualcomm Snapdragon 865+ (7nm)& Google Tensor G3    &MediaTek Dimensity 7020\\
+     \hline
+     CPU&   Octa-core  & Octa-core   &Octa-core& Nona-core    &Octa-core\\
+     \hline
+     GPU&   Mali-G68 MP5  & Adreno 730   &Adreno 650& Mali-G715    &IMG BXM-8-256\\
+     \hline
+     RAM Size (GB) &8 & 12&  6& 12    &8\\
+     \hline
+     Processing Time (mins)    &9 & 6 &  7 & 11     &10 \\
+     \hline
+     Grain Count&   404  & 404& 404& 404    &399\\
+     \hline
+     Statistics (D15, D50, D84) (cm) &   0.78, 1.32, 2.23  & 0.79, 1.32, 2.23& 0.79, 1.32, 2.23& 0.80, 1.32, 2.24    &0.80, 1.32, 2.26\\
+     \hline
+    \end{tabular}
+    \caption{Comparison Showing How Model Performs in Different Edge Devices Using a Sample Image}
+    \label{tab:device-comparison}
+\end{table}
+
+The device compatibility assessment across five different Android devices demonstrates remarkable consistency in analytical outcomes despite varying hardware specifications and processing capabilities. All devices achieved nearly identical grain counts (399-404 grains) and statistical parameters, with D50 values consistently around 1.32 cm, validating the robustness of the optimization approach, as shown in Table \ref{tab:device-comparison}.
+
+Processing time variations (6-11 minutes) reflect hardware differences, with the Samsung Galaxy S22 Ultra achieving the fastest processing due to its advanced Qualcomm Snapdragon 8 Gen 1 processor and 12 GB RAM. Interestingly, the Google Pixel 8 Pro, despite having comparable specifications and the most recent Android version (16), showed longer processing times, potentially reflecting optimization differences between processor architectures or Android implementation variations.
+
+The consistent performance across diverse hardware configurations from devices like the Motorola G54 to tablets like the Samsung Galaxy Tab S7 Plus—demonstrates the effectiveness of the optimization strategy and validates the accessibility of the technology across different user segments and budget ranges.
+
+\newpage
+
+\subsection{Application Grain Size Measurement Validation}
+\begin{figure}[!hbt]
+\centering
+\begin{subfigure} [t]{1\textwidth} 
+    \centering
+    \includegraphics[width=1\linewidth]{latex/figures/app-versus-ground-truth.png}
+    \caption{Validation of mobile grain size analysis through comparison with ground truth measurements done with ImageJ across Major axes of three representative samples with D16, D50, and D84 percentiles clearly marked.}
+    \label{fig:7a}
+\end{subfigure}
+
+\begin{subfigure} [t]{1\textwidth} 
+    \centering
+    \includegraphics[width=1\linewidth]{latex/figures/cdf-comparison.png}
+    \caption{Cumulative distribution function (CDF) comparison between upload (blue) and camera (red) processing methods across the same three sediment samples. Vertical dashed lines indicate key percentiles (D16, D50, D84) with difference values showing systematic differences between both methods.}
+    \label{fig:7b}
+\end{subfigure}
+ \caption{\textit{Validation of mobile application grain size measurements against ground truth data showing original images, detected grains with color-coded masks, and cumulative distribution function comparison between mobile app measurements and ground truth reference data across three samples.}}
+
+\end{figure}
+The validation results against ImageJ ground truth measurements reveal both strengths and limitations of the automated approach. The comparison across three samples shows generally good agreement with manual measurements, particularly for the D50 percentile, which is most critical for sedimentological interpretations. However, systematic differences are apparent, with the developed mobile application showing slight variations in extreme percentiles (D16 and D84).
+
+It is important to note that the ground truth measurements represent major axis lengths of individual grains, while the automated system calculates equivalent diameters from segmented areas. This methodological difference partially explains observed discrepancies. Also, the equivalent diameter calculation provides a more comprehensive representation of grain size by considering the entire visible grain area, potentially offering advantages over single-dimension measurements.
+
+\subsection{Bootstrap Results: Addressing Detection Capability Differences Between Camera and Upload Methods}
+To assess the robustness and generalizability of grain size measurement methods, comprehensive bootstrap analysis was conducted across three independent sediment samples using both camera and upload photo approaches. Each method was evaluated under two conditions: (1) full dataset performance utilizing each method's complete detection capability, and (2) equal sample size comparison for direct methodological assessment. This dual-approach framework addresses the fundamental challenge of comparing methods with different grain detection capabilities while providing practical guidance for field applications.
+
+The upload photo method consistently demonstrated superior grain detection across all samples, detecting about 1.5× to 2× more grains than the camera method, as shown in the tables (vi) in Figures \ref{fig:8a}, \ref{fig:8b}, and \ref{fig:8c}. This detection advantage has significant implications for statistical precision, as larger sample sizes generally improve measurement reliability.
+
+\textbf{Sample-by-Sample Performance:}
+
+\begin{itemize}
+    \item \textbf{Sample 1}: Upload detected 250 grains vs. camera's 128 (1.95× advantage)
+\end{itemize}
+\begin{itemize}
+    \item \textbf{Sample 2}: Upload detected 419 grains vs. camera's 257 (1.63× advantage)
+\end{itemize}
+\begin{itemize}
+    \item \textbf{Sample 3}: Upload detected 157 grains vs. camera's 108 (1.45× advantage)
+\end{itemize}
+When evaluated at full detection capability to obtain the Coefficient of Variation (CV), the upload method achieved superior precision in two of three samples (CVs of 3.48\%, 2.03\%, and 5.25\% respectively), while the camera method showed more consistent precision across samples (CVs of 5.38\%, 2.56\%, and 4.39\%).
+
+Equal sample size comparison revealed consistent systematic differences between methods across all samples (Figures \ref{fig:8}a-c, center (ii) panels). The camera method produced systematically smaller measurements than the upload method across all percentiles (D16, D50, D84), with mean differences ranging from 0.6 to 1.8 units depending on the sample and percentile.
+
+\textbf{Bias Patterns Across Samples:}
+
+\begin{itemize}
+    \item \textbf{Sample 1}: D50 difference = -1.34 (95\% CI: -1.28 to -0.99)
+\end{itemize}
+\begin{itemize}
+    \item \textbf{Sample 2}: D50 difference = -1.14 (95\% CI: -1.28 to -0.99)
+\end{itemize}
+\begin{itemize}
+    \item \textbf{Sample 3}: D50 difference = -1.76 (95\% CI: -2.26 to -1.32)
+\end{itemize}
+% All differences were statistically significant with low probability of randomness (p \textless 0.001), indicating genuine methodological differences rather than random variation. The systematic nature of these differences suggests calibration factors could enable cross-method compatibility.
+\begin{figure}[!hbt]
+\centering
+\begin{subfigure} [t]{1\textwidth} 
+    \centering
+    \includegraphics[width=18cm, height=6cm]{latex/figures/bootstrap-4.png}
+    \caption{ Sample 1 bootstrap analysis (n=128 camera, n=250 upload) showing full dataset performance distributions, equal sample size difference analysis, precision-sample size relationships, and summary statistics.}
+    \label{fig:8a}
+\end{subfigure}
+
+\begin{subfigure} [t]{1\textwidth} 
+    \centering
+    \includegraphics[width=18cm, height=6cm]{latex/figures/bootstrap-3.png}
+    \caption{Sample 2 bootstrap analysis (n=108 camera, n=157 upload) illustrating method performance validation, statistical differences, and operational recommendation matrices.}
+    \label{fig:8b}
+\end{subfigure}
+
+
+\begin{subfigure} [t]{1\textwidth} 
+    \centering
+    \includegraphics[width=18cm, height=6cm]{latex/figures/bootstrap-5.png}
+    \caption{ Sample 3 bootstrap analysis (n=257 camera, n=419 upload) demonstrating method comparison across detection capabilities, systematic bias patterns, and precision optimization curves.}
+    \label{fig:8c}
+\end{subfigure}
+ \caption{\textit{Bootstrap validation of camera vs upload photo methods across three samples showing detection capabilities, systematic bias patterns, precision-sample size relationships, and operational recommendations.}}
+ \label{fig:8}
+
+\end{figure}
+
+
+\section{Discussion}
+\subsection{Model Optimization and Mobile Deployment Success}
+The systematic separation between blue and orange curves as shown in Figure \ref{fig:5} quantifies grain shape distributions, demonstrating the application's capability to capture detailed morphometric properties beyond simple size measurements across varied geological settings. Yellow shaded areas highlight distribution discrepancies, demonstrating that upload method consistently detects finer grain fractions compared to camera method.
+
+Regarding the comparisons of the camera versus upload method, the results as shown in Figure \ref{fig:6} suggest that method selection should consider the trade-off between detection sensitivity and measurement consistency, with implications for field applications requiring either comprehensive grain detection or standardized measurements based on the user's needs.
+
+The method recommendation matrices (Figures \ref{fig:8}a-c, bottom left (iv) panels) provide operational guidance based on available grain count and precision requirements. For applications with limited grain visibility (\textless 100 grains), the camera method consistently provides more reliable results with lower coefficient of variation. For larger grain populations (\textgreater 150 grains), the upload method can leverage its detection advantage to achieve superior statistical precision.
+
+\textbf{Operational Recommendations:}
+
+\begin{itemize}
+    \item \textbf{Limited grain scenarios} (\textless 100 visible grains): Camera method preferred
+\end{itemize}
+\begin{itemize}
+    \item \textbf{Moderate grain scenarios} (100-200 grains): Method selection based on precision requirements
+\end{itemize}
+\begin{itemize}
+    \item \textbf{Abundant grain scenarios} (\textgreater 200 grains): Upload method recommended for optimal precision
+\end{itemize}
+
+The consistency of patterns across three independent samples as shown in Figures \ref{fig:8}(a-c) provides confidence in the methodological findings. Bootstrap confidence intervals were narrow across all samples, indicating high statistical precision in the comparative assessments. The systematic bias patterns, while varying in magnitude between samples, maintained consistent directionality and statistical significance.
+
+\textbf{Reliability Indicators:}
+
+\begin{itemize}
+    \item Pattern replication: 100\% consistency across samples for key findings
+    \item Statistical significance: All major differences maintained p \textless 0.001
+    \item Bootstrap stability: Narrow confidence intervals across all analyses
+    \item Effect sizes: Large, practically significant differences well above measurement uncertainty
+\end{itemize}
+
+The comprehensive bootstrap analysis demonstrates that both camera and upload photo methods provide statistically robust grain size measurements, each with distinct operational advantages. The upload method's superior grain detection capability can translate to improved statistical precision when sufficient grain populations are available, while the camera method offers more consistent performance across varying sample conditions. These findings support adaptive method selection protocols that optimize measurement quality based on specific field conditions and analytical requirements.
+
+\subsection{Limitations and Future Improvements}
+Though the project was able to meet its expectations, several limitations should be acknowledged. The current system relies on visible surfaces and cannot account for grain burial or three-dimensional shape variations that influence actual grain size distributions. The two-dimensional projection limitation is inherent to photographic methods and affects all image-based analysis approaches.
+
+The processing time requirements in real-time field applications can be further enhanced, though this represents a significant improvement over manual measurement approaches. Future optimizations could focus on further model compression and processing pipeline efficiency to reduce analysis time. Retraining the underlying image segmentation model on expanded datasets comprising diverse grain types, sediment compositions, and imaging conditions would significantly enhance the robustness and accuracy of both camera and upload processing methods. Also, optimizing the mobile application to run the models on the background using Android Services and Notifications will make the application more user-friendly.
+
+The system's performance under extreme lighting conditions or with highly weathered/altered grain surfaces requires additional validation. Current results demonstrate effectiveness under typical field conditions, but expanded testing across diverse environmental scenarios would strengthen confidence in universal applicability. Systematic comparison with established laboratory methods (sieve analysis, laser diffraction, optical microscopy, and hydrometer analysis) would provide absolute accuracy assessment and enable the development of correction factors for specific applications. This validation would be particularly valuable for research applications requiring traceable measurement standards.
+
+The development of an iOS version also represents a critical advancement for broader scientific and professional adoption. The iOS implementation should maintain algorithmic consistency with Android versions while leveraging platform-specific optimization opportunities. Parallel validation across both platforms would establish cross-platform measurement equivalence and identify any systematic differences requiring calibration adjustments.
+
+\section{Conclusion}
+This project successfully achieved its objectives by developing, validating, and deploying a comprehensive mobile application that integrates advanced machine learning models for accurate, efficient, and accessible grain-size analysis. The technical innovations, validation results, and practical deployment demonstrate that sophisticated analytical capabilities can be effectively democratized through mobile technology without compromising scientific rigor. The work represents a significant step toward modernizing sedimentological fieldwork practices, enabling large-scale studies that were previously impractical due to manual measurement constraints. By successfully bridging the gap between laboratory-proven technology and field deployment, this research establishes a new paradigm for geological analysis that combines advanced computational methods with field accessibility. The comprehensive validation across diverse conditions, consistent performance across different device specifications, and sophisticated methodological framework ensure that this mobile application provides a reliable, accessible tool for both academic researchers and industry practitioners. This achievement demonstrates the potential for mobile technology to transform scientific practice by bringing advanced analytical capabilities directly to the environments where geological processes occur, fundamentally changing how we study and understand Earth surface processes.
+
+\section{Acknowledgements}
+%TC:ignore
+I would like to express my sincere gratitude to all those who contributed to the successful completion of this research project.
+
+First and foremost, I acknowledge God for His guidance and strength throughout this endeavor. I am deeply grateful to my parents for their unwavering support and encouragement during my studies at Imperial College London.
+
+I extend special thanks to my supervisors (Dr. Rebecca Bell, Nahin Rezwan and Dr. Alexander Whittaker) for their invaluable guidance, expertise, and mentorship. Their support during the field trip to test the mobile application and their constructive feedback throughout the research process were instrumental in shaping this work. I particularly appreciate their patience and dedication in helping me navigate the challenges of method validation and statistical analysis.
+
+My heartfelt appreciation goes to my fellow students (Aribim Bristol, Precious Okon, Prince Wihioka, Ijasubu Adamu, Cynthia Eze, Mayowa Sangotade, and Abiola Oyatobo) at Imperial College who made learning easier, fun, and also generously volunteered their time to test the grain size measurement application across different devices and conditions. Their participation was crucial for the multi-sample validation presented in this study.
+
+I am profoundly grateful to my friend, Ogechi Okoli for her emotional support, patience, and understanding during the demanding periods of application development, analysis, and writing. Her encouragement provided the motivation needed to persevere through challenging moments.
+
+Finally, I acknowledge the resources and facilities provided by Imperial College London that made this research possible, and thank all those who contributed to this work in ways both large and small.
+%TC:endignore
+% References
+\newpage
+\bibliographystyle{agsm}
+\bibliography{references}  % BibTeX references are saved in references.bib
+
+\newpage
+\appendix
+%TC:ignore
+\section{Appendix}
+\subsection{IoU Analysis and Data Export}
+\begin{figure}[!hbt]
+\centering
+\begin{subfigure} [t]{1\textwidth} 
+    \centering
+    \includegraphics[width=1\linewidth]{latex/figures/iou_analysis.png}
+    \caption{Model Conversion Validation using Intersection Over Union (IoU).}
+    \label{fig:11a}
+\end{subfigure}
+
+
+\begin{subfigure} [t]{1\textwidth} 
+    \centering
+    \includegraphics[width=1\linewidth]{latex/figures/sample_csv.png}
+    \caption{Sample CSV File of Grain Data Exported After a Segmentation Analysis.}
+    \label{fig:11b}
+\end{subfigure}
+ \caption{IOU Analysis and Sample CSV Export}
+
+\end{figure}
+
+\subsection{Precision Characteristics and Sample Size Dependencies}
+Bootstrap analysis revealed distinct precision-sample size relationships for each method (Figure \ref{fig:8}a-c, right (iii) panels). The camera method achieved stable precision with relatively small grain counts, typically requiring 80-120 grains to reach coefficient of variation values below 0.5\%. In contrast, the upload method showed greater sensitivity to sample size, requiring 150-200 grains for optimal precision but achieving superior performance when sufficient grains were available.
+
+\textbf{Key Precision Findings:}
+
+\begin{itemize}
+    \item Camera method: Consistent 0.3-0.5\% CV at optimum sample sizes across all samples
+\end{itemize}
+\begin{itemize}
+    \item Upload method: Variable 0.25-1.1\% CV, with better performance in larger grain populations
+\end{itemize}
+\begin{itemize}
+    \item Convergence point: Both methods achieve similar precision when upload method has 200+ grains
+\end{itemize}
+
+\subsection{Application Access and Installation}
+\subsubsection{Mobile Application Download}
+
+\begin{itemize}
+    \item \textbf{GitHub Repository}: https://github.com/ese-ada-lovelace-2024/irp-mcu24
+\end{itemize}
+\begin{itemize}
+    \item \textbf{APK Download Link}: https://tinyurl.com/grainseg-app-download
+\end{itemize}
+\begin{itemize}
+    \item \textbf{System Requirements}:
+    \begin{itemize}
+        \item Android 11.0 (API level 30) or higher
+        \item Minimum of 4GB RAM recommended
+        \item Minimum of 200MB available storage space
+        \item Camera permissions required
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Installation Instructions}
+
+\begin{itemize}
+    \item Enable "Install from Unknown Sources" in Android Settings
+    \item Download the APK file from the provided link
+    \item Install the application
+    \item Grant camera and storage permissions when prompted
+    \item Launch the application and follow the initial instructions
+\end{itemize}
+%TC:endignore
+
+\end{document}          
