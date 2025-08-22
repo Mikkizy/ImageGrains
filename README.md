@@ -8,14 +8,14 @@ A mobile Android application that integrates deep learning models for automated 
 
 This Individual Research Project (IRP) develops a mobile application that uses deep learning models to segment and analyze grain images. The app provides real-time grain detection, segmentation, and analysis capabilities directly on mobile devices.
 
-## 📱 Features
+## Features
 
 - **Real-time Grain Detection**: Camera integration for live grain analysis
 - **Deep Learning Integration**: Pre-trained models for accurate grain segmentation
 - **Mobile-Optimized Performance**: Efficient model inference on Android devices
 - **User-Friendly Interface**: Intuitive design for easy grain analysis
 
-## 🏗️ Project Structure
+## Project Structure
 
 ```
 ├── app/                          # Main Android application code
@@ -24,6 +24,7 @@ This Individual Research Project (IRP) develops a mobile application that uses d
 │   ├── mcu24-project-plan.pdf   # Project plan document
 │   └── mcu24-final-report.pdf   # Final project report
 ├── logbook/                      # Development logbook
+├── mcu24-final-report-latex/     # LaTeX source for final report
 ├── mcu24-project-plan-latex/     # LaTeX source for project plan
 ├── title/                        # Project title configuration
 ├── build.gradle.kts             # Project build configuration
@@ -31,7 +32,7 @@ This Individual Research Project (IRP) develops a mobile application that uses d
 └── README.md                    # This file
 ```
 
-## 🛠️ Technology Stack
+## Technology Stack
 
 - **Platform**: Android
 - **Languages**: Kotlin, Python
@@ -40,7 +41,7 @@ This Individual Research Project (IRP) develops a mobile application that uses d
 - **Computer Vision**: OpenCV
 - **Development Environment**: Android Studio, Jupyter Notebook
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -71,7 +72,7 @@ This Individual Research Project (IRP) develops a mobile application that uses d
     - Connect Android device or start emulator
     - Click "Run" in Android Studio
 
-## 📖 Usage
+## Usage
 
 1. **Launch the app** on your Android device
 2. **Grant camera permissions** when prompted
@@ -81,9 +82,9 @@ This Individual Research Project (IRP) develops a mobile application that uses d
 6. **Complete segmentation** for detailed segmentation
 7. **View results** including grain count, size distribution, and classification
 
-## 🧠 Deep Learning Models
+## Deep Learning Models
 
-The application integrates optimized deep learning models for:
+The application integrates two optimized deep learning models for:
 
 - **Grain Detection**: Identifying individual grains in images
 - **Segmentation**: Precise pixel-level grain boundaries
@@ -96,7 +97,7 @@ The application integrates optimized deep learning models for:
 - **Accuracy**: 95%+ grain detection rate
 - **Model Size**: Optimized for mobile deployment
 
-## 📊 Research Components
+## Research Components
 
 This project includes comprehensive research elements:
 
@@ -105,45 +106,45 @@ This project includes comprehensive research elements:
 - **Mobile Optimization**: Performance analysis and optimization
 - **Validation Studies**: Accuracy and reliability testing
 
-## 🔬 Development Process
+## Development Process
 
 The project follows a structured research methodology:
 
 1. **Problem Analysis**: Identifying grain segmentation challenges
-2. **Model Design**: Developing efficient deep learning architectures
+2. **Model Design**: Selecting and converting deep learning architectures
 3. **Mobile Integration**: Optimizing for Android deployment
 4. **Testing & Validation**: Comprehensive performance evaluation
 5. **Documentation**: Detailed research reporting
 
-## 📝 Documentation
+## Documentation
 
 - **Project Plan**: See `deliverables/mcu24-project-plan.pdf`
 - **Final Report**: See `deliverables/mcu24-final-report.pdf`
 - **Development Log**: See `logbook/logbook.md`
 
-## 🤝 Contributing
+## Contributing
 
 This is an individual research project for academic purposes. For questions or collaboration inquiries, please contact the project author.
 
-## 📄 License
+## License
 
 This project is part of an Individual Research Project at Imperial College London. Please respect academic integrity guidelines when referencing this work.
 
-## 👤 Author
+## Author
 
 **Student ID**: mcu24  
 **Institution**: Imperial College London  
 **Department**: Earth Science and Engineering  
 **Program**: MSc Geo-Energy with Machine Learning and Data Science
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - Imperial College London Earth Science and Engineering Department
 - Ada Lovelace Fellowship Program
 - Research supervisors and advisors
 - Open source deep learning and mobile development communities
 
-## 📞 Contact
+## Contact
 
 For technical questions or academic inquiries related to this project, please use the appropriate academic channels through Imperial College London.
 
