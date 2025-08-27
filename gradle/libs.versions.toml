@@ -8,13 +8,17 @@ coreKtx = "1.16.0"
 junit = "4.13.2"
 junitVersion = "1.2.1"
 espressoCore = "3.6.1"
+kotlinTest = "1.9.0"
+kotlinxCoroutinesTest = "1.10.2"
 lifecycleRuntimeKtx = "2.9.1"
 activityCompose = "1.10.1"
 composeBom = "2025.06.01"
 luceneSpatialExtras = "8.11.2"
+mockk = "1.14.5"
 navigationCompose = "2.9.1"
 onnxruntimeAndroid = "latest.release"
 opencv = "4.5.3.0"
+robolectric = "4.16"
 roomRuntime = "2.7.2"
 serialization = "1.9.0"
 camerax_version = "1.4.2"
@@ -51,6 +55,8 @@ androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-man
 androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
 androidx-compose-navigation = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
+kotlin-test = { module = "kotlin-test:kotlin-test", version.ref = "kotlinTest" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinxCoroutinesTest" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "serialization" }
 androidx-camera-core = { group = "androidx.camera", name = "camera-core", version.ref = "camerax_version" }
 androidx-camera-camera2 = { group = "androidx.camera", name = "camera-camera2", version.ref = "camerax_version" }
@@ -62,8 +68,10 @@ coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coi
 androidx-exifinterface = { group = "androidx.exifinterface", name = "exifinterface", version.ref = "exifinterface" }
 accompanist-permissions = { group = "com.google.accompanist", name = "accompanist-permissions", version.ref = "accompanist-permissions" }
 lucene-spatial-extras = { module = "org.apache.lucene:lucene-spatial-extras", version.ref = "luceneSpatialExtras" }
+mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 onnxruntime-android = { module = "com.microsoft.onnxruntime:onnxruntime-android", version.ref = "onnxruntimeAndroid" }
 #opencv = { module = "com.quickbirdstudios:opencv", version.ref = "opencv" }
+robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
 spatial4j = { module = "org.locationtech.spatial4j:spatial4j", version.ref = "spatial4j" }
 tensorflow-lite = {group = "org.tensorflow", name = "tensorflow-lite", version.ref = "tensorflow_lite"}
 tensorflow-lite-gpu = {group = "org.tensorflow", name = "tensorflow-lite-gpu", version.ref = "tensorflow_lite"}

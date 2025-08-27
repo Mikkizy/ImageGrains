@@ -6,7 +6,7 @@ import kotlin.math.*
 
 /**
  * Fast grid-based spatial index optimized for polygon overlap detection
- * Much faster than JTS STRtree for our use case
+ * Much faster than JTS STRtree for this use case
  */
 class FastSpatialIndex(
     imageWidth: Int,
